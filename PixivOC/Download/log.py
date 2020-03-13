@@ -3,6 +3,7 @@ from logging.handlers import RotatingFileHandler
 from os import listdir, mkdir
 
 # test_path = '../../Download/Log/Downloader.log'
+# test_search_path = '../../Download'
 
 DownloaderFormatString = logging.Formatter('[%(asctime)s %(levelname)s %(name)s] %(thread)d : %(message)s')
 
@@ -13,6 +14,8 @@ downloader_logger = logging.getLogger('Downloader')
 downloader_logger.setLevel(logging.DEBUG)
 
 # Create handler
+# if 'Log' not in listdir('test_search_path'):
+#     mkdir('test_search_path/Log')
 if 'Log' not in listdir('./Download'):
     mkdir('Log')
 debug_handler = logging.StreamHandler()

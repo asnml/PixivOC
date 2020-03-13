@@ -116,7 +116,7 @@ Function tools.
 def create_identification_number(number: str = None):
     if number is not None:
         return 'R' + number[1:]
-    timestamp = int(datetime.now().timestamp())
+    timestamp = str(datetime.now().timestamp()).replace('.', '')
     return f'S{timestamp}'
 
 

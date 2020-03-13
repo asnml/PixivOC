@@ -3,6 +3,7 @@ from logging.handlers import RotatingFileHandler
 from os import listdir, mkdir
 
 # test_path = '../../Log/Core.log'
+# test_search_path = '../..'
 
 SpiderFormatString = logging.Formatter('[%(asctime)s %(levelname)s %(name)s] %(message)s')
 
@@ -13,6 +14,8 @@ core_logger = logging.getLogger('Core')
 core_logger.setLevel(logging.DEBUG)
 
 # Create handler
+# if 'Log' not in listdir('test_search_path'):
+#     mkdir('test_search_path/Log')
 if 'Log' not in listdir('.'):
     mkdir('Log')
 debug_handler = logging.StreamHandler()

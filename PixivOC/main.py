@@ -2,7 +2,7 @@ import json
 from os import path, listdir
 from time import sleep
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Lock
 from multiprocessing import Queue
 from log import core_logger
 from mobileToken import TOKEN_MANAGER
@@ -21,6 +21,7 @@ DATA_FILE_NAME = 'Data.json'
 SLEEP_TIME = 0.1
 
 
+AutoSaveLock = Lock()
 StorageCountDown = 10
 StorageParameter = {
     SendType.CreateTask: 10,
@@ -100,13 +101,17 @@ class TaskManager:
             self._SendQueue.put(send_unit.data)
             for k, v in StorageParameter.items():
                 if unit.SendType == k:
+                    AutoSaveLock.acquire()
                     self._StorageCountdown -= v
+                    AutoSaveLock.release()
 
     def _check_storage_countdown(self):
         while True:
             if self._StorageCountdown <= 0:
-                self._load_tasks()
+                AutoSaveLock.acquire()
+                self._dump_tasks()
                 self._StorageCountdown = StorageCountDown
+                AutoSaveLock.release()
             sleep(SLEEP_TIME)
 
     def _load_tasks(self) -> None:
