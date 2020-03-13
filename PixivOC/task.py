@@ -215,13 +215,13 @@ class BaseTask:
         self._TID = storage.TID
         self._TaskName = storage.TaskName
         self._TaskType = self.TypeID
-        self.Over = storage.Over
+        self._Over = storage.Over
         self._CurrentStage = storage.CurrentStage
         self._ParamsList = storage.ParamsList
         self._Data = storage.Data
         self._SavePath = storage.SavePath
 
-        if self.Over:
+        if self._Over:
             self._Stage = TaskOverStage(
                 self._ParamsList, self._Data,
                 self._stage_complete_callback, self._progress_update
@@ -245,7 +245,7 @@ class BaseTask:
             self._TID,
             self._TaskName,
             self._TaskType,
-            self.Over,
+            self._Over,
             self._CurrentStage,
             self._ParamsList,
             self._Data,
@@ -269,7 +269,7 @@ class BaseTask:
 
     def _task_over(self) -> None:
         result = self._return_value()
-        self.Over = True
+        self._Over = True
         self._Stage = TaskOverStage(
             self._ParamsList, self._Data,
             self._stage_complete_callback, self._progress_update
@@ -279,7 +279,7 @@ class BaseTask:
     @property
     def msg(self):
         stage_name, is_alive, now, total = self._Stage.msg
-        return self._TID, self._TaskName, self.TypeName, stage_name, is_alive, now, total, self._SavePath
+        return self._Over, self._TID, self._TaskName, self.TypeName, stage_name, is_alive, now, total, self._SavePath
 
     # ******************************************
     # you should override the following function
