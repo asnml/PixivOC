@@ -1,9 +1,9 @@
 from task import *
 from Download import PROXY_MANAGER
-from tests.test_task.test_task import UserWorksStage1
+from taskTypes import UserWorksStage1
 
 RUNNING = True
-# TestPrePage = 5  defined in file test_task.py
+# TestPrePage = 5
 
 
 class TestUserWorksStorage(BaseTask):
