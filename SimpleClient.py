@@ -437,7 +437,7 @@ def add_user_works_task():
     except ValueError:
         return print('Illegal work id')
     yield create_default_json(create_identification_number(),
-                              102, keyword=work_id, task_name=task_name, save_path=save_path)
+                              104, keyword=work_id, task_name=task_name, save_path=save_path)
 
 
 '''
@@ -509,6 +509,8 @@ def main():
             add_single_word_task()
         if command == 'AddUserWorksTask':
             add_user_works_task()
+        if command == 'Show':
+            show()
         if command == 'Help':
             for x in command_list:
                 print(x)
