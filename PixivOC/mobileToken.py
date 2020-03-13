@@ -156,9 +156,11 @@ class TokenManager:
         if result.exception is None:
             return self._extract_token(result.result.decode())
         else:
-            # 该异常未被捕捉，异常级别应为 WARNING，应尝试重连
-            core_logger.warning('Request refresh token failed, try to re-connect.')
-            raise Exception('request refresh token failed')
+            core_logger.warning('Request refresh token failed, please check internal connection.')
+            while self._SendTokenList:
+                callback = self._SendTokenList.pop()
+                callback(0)
+                self._send_notice_to_queue(False)
 
     def _extract_token(self, resp: str):
         try:

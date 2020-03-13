@@ -117,6 +117,9 @@ class TokenTaskStage(BaseTaskStage):
         )
 
     def get_token_callback(self, token: str):
+        if token == 0:
+            self.State = WaitStart()
+            return
         request_package_list = self._create_request_package_list(token)
         self.DownloadThread = DownloadThread(self.downloader_single_request_callback, sync=True)
         self.DownloadThread.start(
