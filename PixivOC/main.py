@@ -1,5 +1,5 @@
 import json
-from os import path
+from os import path, listdir
 from time import sleep
 from datetime import datetime
 from threading import Thread
@@ -110,13 +110,17 @@ class TaskManager:
             sleep(SLEEP_TIME)
 
     def _load_tasks(self) -> None:
-        with open(DATA_FILE_NAME) as file:
-            data = json.load(file)
-        for task in data:
-            storage_unit = StorageUnit(*task)
-            task_cls = self._find_task(storage_unit.TaskType)
-            self.TaskMapping[storage_unit.TID] = task_cls(storage_unit, self._accept_task_report)
-        core_logger.info('Load tasks.')
+        if DATA_FILE_NAME not in listdir('.'):
+            temp = open(DATA_FILE_NAME, 'w')
+            temp.close()
+        else:
+            with open(DATA_FILE_NAME) as file:
+                data = json.load(file)
+            for task in data:
+                storage_unit = StorageUnit(*task)
+                task_cls = self._find_task(storage_unit.TaskType)
+                self.TaskMapping[storage_unit.TID] = task_cls(storage_unit, self._accept_task_report)
+            core_logger.info('Load tasks.')
 
     def _dump_tasks(self) -> None:
         writing = []
