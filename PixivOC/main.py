@@ -31,6 +31,8 @@ StorageParameter = {
     SendType.TaskListUpdate: 10
 }
 
+Running = True
+
 
 class Check:
     @staticmethod
@@ -248,14 +250,11 @@ class Server:
         self._SendQueue = send_queue
         self._AcceptQueue = accept_queue
 
-        self._LoopThread = Thread(target=self.loop_check_accept_queue)
-        self._LoopThread.daemon = True
-
     def start(self):
-        self._LoopThread.start()
+        self.loop_check_accept_queue()
 
     def loop_check_accept_queue(self):
-        while True:
+        while Running:
             if not self._AcceptQueue.empty():
                 content = self._AcceptQueue.get()
                 unit = AcceptMsgUnit(content)
@@ -269,6 +268,9 @@ class Server:
 
         if not TOKEN_MANAGER.has_refresh_token and unit.command > 10:
             result = [False, 'Please login.']
+
+        elif unit.command == Command.Exit:
+            pass
 
         elif unit.command == Command.Login:
             result = TOKEN_MANAGER.login(
@@ -348,10 +350,11 @@ class Run:
         send_queue, accept_queue = Queue(), Queue()
         task_manager = TaskManager(send_queue)
         TOKEN_MANAGER.set_send_queue(send_queue)
+        transport_server = LongLinkServer(send_queue, accept_queue, ServerPort)
+        transport_server.daemon = True
+        transport_server.start()
         server = Server(task_manager, send_queue, accept_queue)
         server.start()
-        transport_server = LongLinkServer(send_queue, accept_queue, ServerPort)
-        transport_server.start()
 
 
 if __name__ == '__main__':

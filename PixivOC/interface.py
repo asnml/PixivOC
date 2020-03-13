@@ -1,4 +1,5 @@
 class Command:
+    Exit = 0
     Login = 1
     Logout = 2
     SetProxyMode = 3
