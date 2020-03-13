@@ -427,6 +427,19 @@ def add_single_word_task():
                               102, keyword=work_id, task_name=task_name, save_path=save_path)
 
 
+@send
+def add_user_works_task():
+    work_id = input('>>> Please input user id: ')
+    task_name = input('>>> Please input task name: ')
+    save_path = input('>>> Please input save path: ')
+    try:
+        int(work_id)
+    except ValueError:
+        return print('Illegal work id')
+    yield create_default_json(create_identification_number(),
+                              102, keyword=work_id, task_name=task_name, save_path=save_path)
+
+
 '''
 Main run
 '''
@@ -494,6 +507,8 @@ def main():
             all_task_detail()
         if command == 'AddSingleWorkTask':
             add_single_word_task()
+        if command == 'AddUserWorksTask':
+            add_user_works_task()
         if command == 'Help':
             for x in command_list:
                 print(x)

@@ -111,8 +111,8 @@ class TaskManager:
 
     def _load_tasks(self) -> None:
         if DATA_FILE_NAME not in listdir('.'):
-            temp = open(DATA_FILE_NAME, 'w')
-            temp.close()
+            file = open(DATA_FILE_NAME, 'w')
+            file.close()
         else:
             with open(DATA_FILE_NAME) as file:
                 data = json.load(file)
