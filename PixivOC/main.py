@@ -192,8 +192,10 @@ class TaskManager:
             except ValueError:
                 return False
         type_id = UserWorksTask.TypeID
-        timestamp = self._get_timestamp()
-        storage_unit = StorageUnit(timestamp, task_name, type_id, 1, [keyword], [], save_path)
+        timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
+        storage_unit = StorageUnit(
+            timestamp, task_name, type_id, False, 1, [keyword], [], save_path
+        )
         task = cls(storage_unit, self._accept_task_report)
         self.TaskMapping[timestamp] = task
         self._report(PreSendUnit(SendType.CreateTask, timestamp))

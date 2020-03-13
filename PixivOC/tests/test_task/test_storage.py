@@ -25,7 +25,7 @@ def disguise_sent_to_server(msg_unit: TaskReportUnit):
 
 if __name__ == '__main__':
     PROXY_MANAGER.change_to_ip()
-    STORAGE = StorageUnit(1, 'TestStorage', 1, 1, [28145748], [], '.')
+    STORAGE = StorageUnit(1, 'TestStorage', 1, False, 1, [28145748], [], '.')
     TASK = TestUserWorksStorage(STORAGE, disguise_sent_to_server)
     TASK.start()
     while RUNNING:

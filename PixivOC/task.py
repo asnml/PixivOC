@@ -166,12 +166,27 @@ class NoTokenTaskStage(BaseTaskStage):
         raise Exception('Please override this function.')
 
 
+class TaskOverStage(BaseTaskStage):
+    def __init__(self, params_list: list, data: list,
+                 stage_complete_callback_fn: Callable[[int], None],
+                 progress_update_fn: Callable[[str, int, int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+        self._StageName = 'TaskOver'
+
+    def start(self) -> None:
+        pass
+
+    def stop(self) -> None:
+        pass
+
+
 class StorageUnit:
-    def __init__(self, tid: int, task_name: str, task_type: int,
+    def __init__(self, tid: int, task_name: str, task_type: int, over: bool,
                  current_stage: int, params_list: list, data: list, save_path: str):
         self.TID = tid
         self.TaskName = task_name
         self.TaskType = task_type
+        self.Over = over
         self.CurrentStage = current_stage
         if not data:  # if list of data is empty
             assert params_list is not None
@@ -184,6 +199,7 @@ class StorageUnit:
             self.TID,
             self.TaskName,
             self.TaskType,
+            self.Over,
             self.CurrentStage,
             self.ParamsList,
             self.Data,
@@ -199,12 +215,19 @@ class BaseTask:
         self._TID = storage.TID
         self._TaskName = storage.TaskName
         self._TaskType = self.TypeID
+        self.Over = storage.Over
         self._CurrentStage = storage.CurrentStage
         self._ParamsList = storage.ParamsList
         self._Data = storage.Data
         self._SavePath = storage.SavePath
 
-        self._Stage = self._create_stage()
+        if self.Over:
+            self._Stage = TaskOverStage(
+                self._ParamsList, self._Data,
+                self._stage_complete_callback, self._progress_update
+            )
+        else:
+            self._Stage = self._create_stage()
         self._AcceptReportFn = accept_report_fn
         core_logger.info(f'Create task {self._TaskName}.')
 
@@ -222,6 +245,7 @@ class BaseTask:
             self._TID,
             self._TaskName,
             self._TaskType,
+            self.Over,
             self._CurrentStage,
             self._ParamsList,
             self._Data,
@@ -245,7 +269,11 @@ class BaseTask:
 
     def _task_over(self) -> None:
         result = self._return_value()
-        self._Stage = Over()
+        self.Over = True
+        self._Stage = TaskOverStage(
+            self._ParamsList, self._Data,
+            self._stage_complete_callback, self._progress_update
+        )
         self._AcceptReportFn(TaskReportUnit(SendType.TaskOver, self._TID, result))
 
     @property
@@ -406,16 +434,3 @@ class Stopped(TaskState):
     @staticmethod
     def stop(task_stage: BaseTaskStage):
         print("Task has been stopped.")
-
-
-class Over(TaskState):
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-        pass
-
-    @staticmethod
-    def stop(task_stage: BaseTaskStage):
-        pass
