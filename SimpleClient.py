@@ -71,7 +71,8 @@ Data mode.
 
 
 class Task:
-    def __init__(self, tid, task_name, task_type, stage_name, running, now, total, save_path):
+    def __init__(self, over, tid, task_name, task_type, stage_name, running, now, total, save_path):
+        self.Over = over
         self.TID = tid
         self.TaskName = task_name
         self.TaskType = task_type
@@ -81,7 +82,8 @@ class Task:
         self.Total = total
         self.SavePath = save_path
 
-    def update(self, tid, task_name, task_type, stage_name, running, less, total, save_path):
+    def update(self, over, tid, task_name, task_type, stage_name, running, less, total, save_path):
+        self.Over = over
         self.TID = tid
         self.TaskName = task_name
         self.TaskType = task_type
@@ -381,6 +383,10 @@ def task_detail():
     if not match:
         task = Task(*unit.Content)
         TaskList.append(task)
+    print('')
+    for parameter in unit.Content:
+        print(parameter, end=', ')
+    print('')
 
 
 @send
@@ -412,6 +418,11 @@ def all_task_detail():
         if not match:
             task = Task(*single)
             TaskList.append(task)
+    print('')
+    for task in unit.Content:
+        for parameter in task:
+            print(parameter, end=', ')
+        print('')
 
 
 @send
@@ -473,6 +484,7 @@ def main():
         'AddWorkDetailsTask',
         'AddSingleWorkTask',
         'AddUserWorksTask',
+        'Show',
         'Help'
     ]
     while True:
