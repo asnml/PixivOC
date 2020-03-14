@@ -8,7 +8,7 @@ SERVER_LISTEN_NUMBER = 1
 CONNECT_TIMEOUT = 3
 
 
-class LongLinkServer(Process):
+class SingleLinkServer(Process):
     def __init__(self, send_queue: Queue, accept_queue: Queue, port: int):
         super().__init__()
         assert type(port) is int
@@ -54,7 +54,7 @@ class LongLinkServer(Process):
                     msg_pack = pack(f'{msg_length}s', encoded_msg)
                     connect.send(length_pack)
                     connect.send(msg_pack)
-                    print(encoded_msg.decode())
+
         except BrokenPipeError:
             connect.close()
             return self.wait_connect()
@@ -76,5 +76,5 @@ if __name__ == '__main__':
     add_thread.daemon = True
     add_thread.start()
 
-    Server = LongLinkServer(Queue(), SendQueue, 13575)
+    Server = SingleLinkServer(Queue(), SendQueue, 13575)
     Server.wait_connect()

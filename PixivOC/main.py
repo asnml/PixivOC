@@ -8,7 +8,7 @@ from log import core_logger
 from mobileToken import TOKEN_MANAGER
 from interface import SendType, Command
 from optional import ServerPort
-from Transport.TransportServer import LongLinkServer
+from TransportServer import SingleLinkServer
 from task import StorageUnit, BaseTask, BaseTaskStage
 from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
 from structure import PreSendUnit, TaskReportUnit, \
@@ -352,7 +352,7 @@ class Run:
         send_queue, accept_queue = Queue(), Queue()
         task_manager = TaskManager(send_queue)
         TOKEN_MANAGER.set_send_queue(send_queue)
-        transport_server = LongLinkServer(send_queue, accept_queue, ServerPort)
+        transport_server = SingleLinkServer(send_queue, accept_queue, ServerPort)
         transport_server.daemon = True
         transport_server.start()
         server = Server(task_manager, send_queue, accept_queue)
