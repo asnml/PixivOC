@@ -157,6 +157,7 @@ class TokenManager:
             return self._extract_token(result.result.decode())
         else:
             core_logger.warning('Request refresh token failed, please check internal connection.')
+            self._Refreshing = False
             while self._SendTokenList:
                 callback = self._SendTokenList.pop()
                 callback(0)
