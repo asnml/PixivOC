@@ -267,14 +267,14 @@ class BaseTask:
         elif status_code == ExitState.Cancel:
             pass
 
-    def _task_over(self) -> None:
+    def _task_over(self) -> BaseTaskStage:
         result = self._return_value()
         self._Over = True
-        self._Stage = TaskOverStage(
+        self._AcceptReportFn(TaskReportUnit(SendType.TaskOver, self._TID, result))
+        return TaskOverStage(
             self._ParamsList, self._Data,
             self._stage_complete_callback, self._progress_update
         )
-        self._AcceptReportFn(TaskReportUnit(SendType.TaskOver, self._TID, result))
 
     @property
     def msg(self):
@@ -286,6 +286,9 @@ class BaseTask:
     # ******************************************
 
     def _create_stage(self) -> BaseTaskStage or None:
+        # At end must use this form:
+        # if self._CurrentStage == some:
+        #     return self._task_over()
         raise Exception('Please override this function.')
 
     def _return_value(self) -> Any:
