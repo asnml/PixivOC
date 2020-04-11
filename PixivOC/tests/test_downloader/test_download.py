@@ -32,13 +32,13 @@ def create_baidu_package_list():
 
 def create_pixiv_package_list():
     url_list = [
-        (f"https://tc-pximg01.techorus-cdn.com/img-original/img/2019/02/22/17/26/17/73324421_p0.jpg",
+        (f"https://i.pximg.net/img-original/img/2019/02/22/17/26/17/73324421_p0.jpg",
          "73324421", "73324421.jpg"),
-        (f"https://tc-pximg01.techorus-cdn.com/img-original/img/2019/06/29/01/05/39/75454114_p0.jpg",
+        (f"https://i.pximg.net/img-original/img/2019/06/29/01/05/39/75454114_p0.jpg",
          "75454114", "75454114.jpg"),
-        (f"https://tc-pximg01.techorus-cdn.com/img-original/img/2019/07/06/00/00/02/75568860_p0.jpg",
+        (f"https://i.pximg.net/img-original/img/2019/07/06/00/00/02/75568860_p0.jpg",
          "75568860", "75568860.jpg"),
-        ("https://tc-pximg01.techorus-cdn.com/img-original/img/2019/12/10/20/37/30/78232796_p0.jpg",
+        ("https://i.pximg.net/img-original/img/2019/12/10/20/37/30/78232796_p0.jpg",
          "78232796", "78232796.jpg")
     ]
     ret = []
@@ -182,4 +182,4 @@ if __name__ == '__main__':
 
     # test_sync_ip()
     # this function exist error.
-    # will cause SSL exception: domain tc-pximg01.techorus-cdn.com not match a248.e.akamai.net
+    # will cause SSL exception: domain i.pximg.net not match a248.e.akamai.net

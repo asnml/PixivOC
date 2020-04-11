@@ -9,8 +9,6 @@ PRE_PAGE = 500
 
 class BaseApi:
     suffix_pattern = compile(r'^.+/((\d+).+)$')
-    old_domain = "https://i.pximg.net"
-    new_domain = "https://tc-pximg01.techorus-cdn.com"
 
     @staticmethod
     def get_package(*args, **kwargs) -> RequestPackage:
@@ -48,18 +46,13 @@ class BaseApi:
         }
 
     @staticmethod
-    def replace_domain(url: str):
-        return url.replace(BaseApi.old_domain, BaseApi.new_domain, 1)
-
-    @staticmethod
     def get_picture_request_package(url: str) -> RequestPackage:
         picture_name, pid = findall(BaseApi.suffix_pattern, url)[0]
         headers = {
             'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/78.0.3904.97 Safari/537.36",
-            'Host': "i.pximg.net",
-            'SNI-Host': "i.pximg.net",
+            # 'Host': "i.pximg.net",
             # 'Referer': f"https://www.pixiv.net/artworks/{pid}"
         }
         return RequestPackage(url, 'GET', headers=headers, msg=(picture_name, url))
@@ -120,13 +113,11 @@ class SingleWorkAPI(BaseApi):
             for picture in result['response']:
                 page_count = picture['page_count']
                 if page_count == 1:
-                    url = BaseApi.replace_domain(picture['image_urls']['large'])
-                    picture_url_list.append(url)
+                    picture_url_list.append(picture['image_urls']['large'])
                 else:
                     front, number, back = findall(UserWorksAPI.page_count_pattern, picture['image_urls']['large'])[0]
                     for i in range(page_count):
-                        url = BaseApi.replace_domain(f'{front}{i}{back}')
-                        picture_url_list.append(url)
+                        picture_url_list.append(f'{front}{i}{back}')
             return picture_url_list
         else:
             return []
@@ -171,11 +162,9 @@ class UserWorksAPI(BaseApi):
         for picture in result['response']:
             page_count = picture['page_count']
             if page_count == 1:
-                url = BaseApi.replace_domain(picture['image_urls']['large'])
-                picture_url_list.append(url)
+                picture_url_list.append(picture['image_urls']['large'])
             else:
                 front, number, back = findall(UserWorksAPI.page_count_pattern, picture['image_urls']['large'])[0]
                 for i in range(page_count):
-                    url = BaseApi.replace_domain(f'{front}{i}{back}')
-                    picture_url_list.append(url)
+                    picture_url_list.append(f'{front}{i}{back}')
         return picture_url_list
