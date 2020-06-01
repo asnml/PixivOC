@@ -52,8 +52,8 @@ class BaseApi:
             'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                           "AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/78.0.3904.97 Safari/537.36",
-            # 'Host': "i.pximg.net",
-            # 'Referer': f"https://www.pixiv.net/artworks/{pid}"
+            'Host': "i.pximg.net",
+            'Referer': f"https://www.pixiv.net/artworks/{pid}"
         }
         return RequestPackage(url, 'GET', headers=headers, msg=(picture_name, url))
 
