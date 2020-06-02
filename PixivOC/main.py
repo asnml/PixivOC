@@ -2,7 +2,7 @@ import json
 from os import path, listdir
 from time import sleep
 from datetime import datetime
-from threading import Thread, Lock
+from threading import Thread
 from multiprocessing import Queue
 from log import core_logger
 from mobileToken import TOKEN_MANAGER
@@ -21,15 +21,7 @@ DATA_FILE_NAME = 'Data.json'
 SLEEP_TIME = 0.1
 
 
-AutoSaveLock = Lock()
-StorageCountDown = 10
-StorageParameter = {
-    SendType.CreateTask: 10,
-    SendType.DeleteTask: 10,
-    SendType.TaskStatusUpdate: 1,
-    SendType.TaskOver: 10,
-    SendType.TaskListUpdate: 10
-}
+AutoSaveTime = 1800  # unit: second
 
 Running = True
 
@@ -77,10 +69,9 @@ class TaskManager:
         self._SendQueue = send_queue
         self._load_tasks()
 
-        self._StorageCountdown = StorageCountDown
-        self._CheckThread = Thread(target=self._check_storage_countdown)
-        self._CheckThread.daemon = True
-        self._CheckThread.start()
+        self._AutoSaveThread = Thread(target=self._auto_save_thread)
+        self._AutoSaveThread.daemon = True
+        self._AutoSaveThread.start()
 
     @staticmethod
     def _get_timestamp() -> int:
@@ -101,20 +92,11 @@ class TaskManager:
         send_unit = SendMsgUnit(identification_number, unit.SendType, unit.content)
         if send_unit.effective:
             self._SendQueue.put(send_unit.data)
-            for k, v in StorageParameter.items():
-                if unit.SendType == k:
-                    AutoSaveLock.acquire()
-                    self._StorageCountdown -= v
-                    AutoSaveLock.release()
 
-    def _check_storage_countdown(self):
+    def _auto_save_thread(self):
         while True:
-            if self._StorageCountdown <= 0:
-                AutoSaveLock.acquire()
-                self._dump_tasks()
-                self._StorageCountdown = StorageCountDown
-                AutoSaveLock.release()
-            sleep(SLEEP_TIME)
+            sleep(AutoSaveTime)
+            self._dump_tasks()
 
     def _load_tasks(self) -> None:
         if DATA_FILE_NAME not in listdir('.'):
