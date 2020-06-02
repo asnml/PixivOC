@@ -33,7 +33,7 @@ class SendType:
     TokenStatusUpdate = 2
     CreateTask = 11
     DeleteTask = 12
-    TaskStatusUpdate = 13
+    # TaskStatusUpdate = 13
     TaskOver = 14
     TaskListUpdate = 15
 

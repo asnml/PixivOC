@@ -24,15 +24,15 @@ class BaseTaskStage:
     Increment = True
 
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
+                 stage_complete_callback_fn: Callable[[int], None]):
+        #         progress_update_fn: Callable[[str, int, int], None]):
         self._StageName = 'DefaultStageName'
         self.State = WaitStart()
         self._TimeoutIncrement = self.Increment
         self._ParamsList = params_list  # please note: this is not deepcopy variable
         self._Data = data  # please note: this is not deepcopy variable
         self._StageCompleteCallbackFn = stage_complete_callback_fn
-        self._ProgressUpdateFn = progress_update_fn
+        # self._ProgressUpdateFn = progress_update_fn
         self.DownloadThread = None
 
         self.Total = len(self._ParamsList) + len(self._Data)
@@ -76,7 +76,7 @@ class BaseTaskStage:
             parse_result = self._parse_request_result(result_package)
             self._ParamsList.remove(parse_result.request_param)
             # core_logger.debug(f'Progress: {len(self._ParamsList)}/{self._All}')
-            self._ProgressUpdateFn(self._StageName, len(self._ParamsList), self.Total)
+            # self._ProgressUpdateFn(self._StageName, len(self._ParamsList), self.Total)
             if parse_result.result is not None:
                 if type(parse_result.result) is list:
                     self._Data.extend(parse_result.result)
@@ -105,9 +105,8 @@ class BaseTaskStage:
 
 class TokenTaskStage(BaseTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
 
     def start(self):
         self.State.start(
@@ -145,9 +144,8 @@ class TokenTaskStage(BaseTaskStage):
 
 class NoTokenTaskStage(BaseTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
 
     def start(self):
         self.State.start(
@@ -168,9 +166,8 @@ class NoTokenTaskStage(BaseTaskStage):
 
 class TaskOverStage(BaseTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'TaskOver'
 
     def start(self) -> None:
@@ -223,8 +220,7 @@ class BaseTask:
 
         if self._Over:
             self._Stage = TaskOverStage(
-                self._ParamsList, self._Data,
-                self._stage_complete_callback, self._progress_update
+                self._ParamsList, self._Data, self._stage_complete_callback
             )
         else:
             self._Stage = self._create_stage()
@@ -252,10 +248,10 @@ class BaseTask:
             self._SavePath
         )
 
-    def _progress_update(self, stage_name: str, now: int, all_: int):
-        self._AcceptReportFn(TaskReportUnit(
-            SendType.TaskStatusUpdate, self._TID, [stage_name, now, all_]
-        ))
+    # def _progress_update(self, stage_name: str, now: int, all_: int):
+    #     self._AcceptReportFn(TaskReportUnit(
+    #         SendType.TaskStatusUpdate, self._TID, [stage_name, now, all_]
+    #     ))
 
     def _stage_complete_callback(self, status_code: int) -> None:
         if status_code == ExitState.Normal:
@@ -272,8 +268,7 @@ class BaseTask:
         self._Over = True
         self._AcceptReportFn(TaskReportUnit(SendType.TaskOver, self._TID, result))
         return TaskOverStage(
-            self._ParamsList, self._Data,
-            self._stage_complete_callback, self._progress_update
+            self._ParamsList, self._Data, self._stage_complete_callback
         )
 
     @property

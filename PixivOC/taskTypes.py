@@ -10,9 +10,8 @@ Usually used stage.
 
 class SavePicture(NoTokenTaskStage):
     def __init__(self, task_name: str, save_path: str, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'DownloadPicture'
 
         abs_path = path.abspath(save_path)
@@ -33,7 +32,7 @@ class WorkDetailsTask(BaseTask):
     def _create_stage(self) -> BaseTaskStage or None:
         if self._CurrentStage == 1:
             return WorkDetailsStage1(self._ParamsList, self._Data,
-                                     self._stage_complete_callback, self._progress_update)
+                                     self._stage_complete_callback)
         if self._CurrentStage == 2:
             return self._task_over()
 
@@ -43,9 +42,8 @@ class WorkDetailsTask(BaseTask):
 
 class WorkDetailsStage1(TokenTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'GetWorkDetails'
         self.WorkID = self._ParamsList[0]
         assert type(self.WorkID) is int
@@ -71,11 +69,11 @@ class SingleWorkTask(BaseTask):
     def _create_stage(self) -> BaseTaskStage or None:
         if self._CurrentStage == 1:
             return SingleWorkStage1(self._ParamsList, self._Data,
-                                    self._stage_complete_callback, self._progress_update)
+                                    self._stage_complete_callback)
         if self._CurrentStage == 2:
             return SingleWorkStage2(self._TaskName, self._SavePath,
                                     self._ParamsList, self._Data,
-                                    self._stage_complete_callback, self._progress_update)
+                                    self._stage_complete_callback)
         if self._CurrentStage == 3:
             return self._task_over()
 
@@ -85,9 +83,8 @@ class SingleWorkTask(BaseTask):
 
 class SingleWorkStage1(TokenTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'GetWorkDetails'
         self.WorkID = self._ParamsList[0]
         assert type(self.WorkID) is int
@@ -129,10 +126,10 @@ class UserWorksLinkTask(BaseTask):
     def _create_stage(self) -> BaseTaskStage or None:
         if self._CurrentStage == 1:
             return UserWorksStage1(self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+                                   self._stage_complete_callback)
         if self._CurrentStage == 2:
             return UserWorksStage2(self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+                                   self._stage_complete_callback)
         if self._CurrentStage == 3:
             return self._task_over()
 
@@ -142,9 +139,8 @@ class UserWorksLinkTask(BaseTask):
 
 class UserWorksStage1(TokenTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'GetWorksNumber'
 
         assert type(params_list[0]) == int
@@ -164,9 +160,8 @@ class UserWorksStage1(TokenTaskStage):
 
 class UserWorksStage2(TokenTaskStage):
     def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None],
-                 progress_update_fn: Callable[[str, int, int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn, progress_update_fn)
+                 stage_complete_callback_fn: Callable[[int], None]):
+        super().__init__(params_list, data, stage_complete_callback_fn)
         self._StageName = 'GetPageUrls'
 
     def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
@@ -195,14 +190,14 @@ class UserWorksTask(BaseTask):
     def _create_stage(self) -> BaseTaskStage or None:
         if self._CurrentStage == 1:
             return UserWorksStage1(self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+                                   self._stage_complete_callback)
         if self._CurrentStage == 2:
             return UserWorksStage2(self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+                                   self._stage_complete_callback)
         if self._CurrentStage == 3:
             return UserWorksStage3(self._TaskName, self._SavePath,
                                    self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+                                   self._stage_complete_callback)
         if self._CurrentStage == 4:
             return self._task_over()
 

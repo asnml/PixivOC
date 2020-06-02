@@ -9,8 +9,7 @@ RUNNING = True
 class TestUserWorksStorage(BaseTask):
     def _create_stage(self) -> BaseTaskStage:
         if self._CurrentStage == 1:
-            return UserWorksStage1(self._ParamsList, self._Data,
-                                   self._stage_complete_callback, self._progress_update)
+            return UserWorksStage1(self._ParamsList, self._Data, self._stage_complete_callback)
         self._task_over()
 
     def _return_value(self) -> Any:
