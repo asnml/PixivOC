@@ -64,6 +64,17 @@ class ProxyManager:
         package.headers['SNI-Host'] = domain
         return package
 
+    def get_setting(self):
+        status, address = '', ''
+        if self._State == 0:
+            status = 'Direct'
+        if self._State == 1:
+            status = 'Proxy'
+            address = self._Proxy
+        if self._State == 2:
+            status = 'IP'
+        return status, address
+
 
 def test_server_latency():
     # https://stackoverflow.com/questions/2953462/pinging-servers-in-python

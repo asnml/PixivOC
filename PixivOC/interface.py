@@ -11,6 +11,7 @@ class Command:
     SetConcurrencyNumber = 6
     SetIntervalTime = 7
     SetIncrement = 8
+    GetEnvironment = 9
 
     StartTask = 11
     StopTask = 12
@@ -26,7 +27,7 @@ class Command:
     @staticmethod
     def list():
         return [
-            1, 2, 3, 4, 5,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
             11, 12, 13, 14, 15,
             101, 102, 103, 104
         ]

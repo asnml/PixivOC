@@ -227,6 +227,14 @@ class EnvironmentSetting:
         BaseTaskStage.Increment = b
         return True
 
+    @staticmethod
+    def get_setting():
+        proxy, proxy_address = PROXY_MANAGER.get_setting()
+        timeout = CLIENT_SESSION_PARAMS.total_timeout
+        concurrency_number = CLIENT_SESSION_PARAMS.concurrency_number
+        interval_time = CLIENT_SESSION_PARAMS.interval
+        return proxy, proxy_address, timeout, concurrency_number, interval_time
+
 
 class Server:
     def __init__(self, task_manager: TaskManager, send_queue: Queue, accept_queue: Queue):
@@ -285,6 +293,9 @@ class Server:
 
         elif unit.command == Command.SetIncrement:
             result = EnvironmentSetting.set_increment(unit.data['Increment'])
+
+        elif unit.command == Command.GetEnvironment:
+            result = EnvironmentSetting.get_setting()
 
         elif unit.command == Command.StartTask:
             result = self._TaskManager.start(unit.data['TID'])
