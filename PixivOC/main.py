@@ -194,7 +194,7 @@ class EnvironmentSetting:
         :return:
         """
         try:
-            assert mode_code in [1, 2, 3]
+            assert mode_code in [0, 1, 2]
             if mode_code == 1:
                 assert proxy_address is not None
         except AssertionError:
