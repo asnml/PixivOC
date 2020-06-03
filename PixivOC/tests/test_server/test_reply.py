@@ -34,7 +34,7 @@ def create_json(number: str, command: int, account: str = '', password: str = ''
     }
 
 
-change_mode = create_json('S1', 3, proxy_mode=2)
+change_mode = create_json('S1', 4, proxy_mode=2)
 login = create_json('S2', 1, account=Account, password=Password)
 create_task = create_json('S3', 101, keyword='79468013', task_name='TestServer', save_path='.')
 query_all_details = create_json('S4', 15)

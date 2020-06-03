@@ -261,7 +261,7 @@ def set_proxy_mode():
     except AssertionError:
         return print('Illegal value.')
     unit = yield create_default_json(create_identification_number(),
-                                     3, proxy_mode=mode, proxy=address)
+                                     4, proxy_mode=mode, proxy=address)
     if unit.Content:
         print('Successfully set proxy mode.')
     else:
@@ -275,7 +275,7 @@ def set_timeout():
         timeout = int(timeout)
     except ValueError:
         return print('Illegal value')
-    unit = yield create_default_json(create_identification_number(), 4, timeout=timeout)
+    unit = yield create_default_json(create_identification_number(), 5, timeout=timeout)
     if unit.Content:
         print('Successfully set timeout.')
     else:
@@ -289,7 +289,7 @@ def set_concurrency_number():
         number = int(number)
     except ValueError:
         return print('Illegal value')
-    unit = yield create_default_json(create_identification_number(), 5, concurrency=number)
+    unit = yield create_default_json(create_identification_number(), 6, concurrency=number)
     if unit.Content:
         print('Successfully set concurrency number.')
     else:
@@ -303,7 +303,7 @@ def set_interval_time():
         interval = int(interval)
     except ValueError:
         return print('Illegal value')
-    unit = yield create_default_json(create_identification_number(), 6, interval=interval)
+    unit = yield create_default_json(create_identification_number(), 7, interval=interval)
     if unit.Content:
         print('Successfully set interval time.')
     else:
@@ -316,7 +316,7 @@ def set_increment():
     if increment not in ['true', 'false']:
         return print('Illegal value')
     increment = True if increment == 'true' else False
-    unit = yield create_default_json(create_identification_number(), 7, increment=increment)
+    unit = yield create_default_json(create_identification_number(), 8, increment=increment)
     if unit.Content:
         print('Successfully set increment.')
     else:

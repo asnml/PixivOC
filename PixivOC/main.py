@@ -265,6 +265,9 @@ class Server:
         elif unit.command == Command.Logout:
             pass
 
+        elif unit.command == Command.IsLogin:
+            result = TOKEN_MANAGER.has_refresh_token
+
         elif unit.command == Command.SetProxyMode:
             result = EnvironmentSetting.set_proxy_mode(
                 unit.data['ProxyMode'],

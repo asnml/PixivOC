@@ -1,12 +1,16 @@
+# The only file associated with this file is main.py
+
+
 class Command:
     Exit = 0
     Login = 1
     Logout = 2
-    SetProxyMode = 3
-    SetTimeout = 4
-    SetConcurrencyNumber = 5
-    SetIntervalTime = 6
-    SetIncrement = 7
+    IsLogin = 3
+    SetProxyMode = 4
+    SetTimeout = 5
+    SetConcurrencyNumber = 6
+    SetIntervalTime = 7
+    SetIncrement = 8
 
     StartTask = 11
     StopTask = 12
