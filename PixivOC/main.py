@@ -173,23 +173,24 @@ class TaskManager:
     # *********************
 
     def add_single_keyword_task(self, keyword: str, task_name: str, save_path: str,
-                                int_keyword: bool, allow_null: bool, cls) -> bool:
+                                int_keyword: bool, allow_null: bool, cls) -> tuple:
         if not Check.all(task_name, save_path, allow_null):
-            return False
+            return False, []
         if int_keyword:
             try:
                 keyword = int(keyword)
             except ValueError:
-                return False
+                return False, []
         type_id = UserWorksTask.TypeID
         timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
         storage_unit = StorageUnit(
             timestamp, task_name, type_id, False, 1, [keyword], [], save_path
         )
-        task = cls(storage_unit, self._accept_task_report)
+        task = cls(storage_unit, self._accept_task_report)  # type: BaseTask
         self.TaskMapping[timestamp] = task
-        self._report(PreSendUnit(SendType.CreateTask, timestamp))
-        return True
+        msg = task.msg  # type: tuple
+        # self._report(PreSendUnit(SendType.CreateTask, timestamp))
+        return (True, *msg)
 
 
 class EnvironmentSetting:
