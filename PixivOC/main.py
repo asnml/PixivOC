@@ -189,7 +189,7 @@ class TaskManager:
         task = cls(storage_unit, self._accept_task_report)  # type: BaseTask
         self.TaskMapping[timestamp] = task
         msg = task.msg  # type: tuple
-        # self._report(PreSendUnit(SendType.CreateTask, timestamp))
+        self._report(PreSendUnit(SendType.CreateTask, timestamp))
         return (True, *msg)
 
 
