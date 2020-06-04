@@ -323,7 +323,7 @@ class Server:
 
         elif unit.command == Command.AddWorkDetailsTask:
             result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], unit.data['SavePath'],
+                unit.data['KeyWord'], unit.data['TaskName'], '',
                 True, True, WorkDetailsTask
             )
 
@@ -335,7 +335,7 @@ class Server:
 
         elif unit.command == Command.AddUserWorksLinkTask:
             result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], unit.data['SavePath'],
+                unit.data['KeyWord'], unit.data['TaskName'], '',
                 True, True, UserWorksLinkTask
             )
 
