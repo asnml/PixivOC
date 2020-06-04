@@ -2,7 +2,7 @@ import json
 from os import path, listdir
 from time import sleep
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Lock
 from multiprocessing import Queue
 from log import core_logger
 from mobileToken import TOKEN_MANAGER
@@ -21,7 +21,8 @@ DATA_FILE_NAME = 'Data.json'
 SLEEP_TIME = 0.1
 
 
-AutoSaveTime = 1800  # unit: second
+SaveLock = Lock()
+AutoSaveTime = 300  # unit: second
 
 Running = True
 
@@ -90,13 +91,20 @@ class TaskManager:
     def _report(self, unit: PreSendUnit):
         identification_number = create_identification_number()
         send_unit = SendMsgUnit(identification_number, unit.SendType, unit.content)
+        if unit.SendType == SendType.CreateTask or \
+                unit.SendType == SendType.DeleteTask or unit.SendType == SendType.TaskOver:
+            SaveLock.acquire()
+            self._dump_tasks()
+            SaveLock.release()
         if send_unit.effective:
             self._SendQueue.put(send_unit.data)
 
     def _auto_save_thread(self):
         while True:
             sleep(AutoSaveTime)
+            SaveLock.acquire()
             self._dump_tasks()
+            SaveLock.release()
 
     def _load_tasks(self) -> None:
         if DATA_FILE_NAME not in listdir('.'):
