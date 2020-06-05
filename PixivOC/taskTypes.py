@@ -102,7 +102,7 @@ class SingleWorkStage2(SavePicture):
     def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
         with open(path.join(self._SavePath, result_package.msg[0]), 'wb') as file:
             file.write(result_package.result)
-        return ParseResult(result_package.msg[1])
+        return ParseResult(result_package.msg[1], result_package.msg[0])
 
     def _create_request_package_list(self) -> RequestPackageList:
         return [SingleWorkAPI.get_picture_request_package(url) for url in self._ParamsList]
@@ -209,7 +209,7 @@ class UserWorksStage3(SavePicture):
     def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
         with open(path.join(self._SavePath, result_package.msg[0]), 'wb') as file:
             file.write(result_package.result)
-        return ParseResult(result_package.msg[1])
+        return ParseResult(result_package.msg[1], result_package.msg[0])
 
     def _create_request_package_list(self) -> RequestPackageList:
         return [UserWorksAPI.get_picture_request_package(url) for url in self._ParamsList]
