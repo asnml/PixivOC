@@ -45,5 +45,5 @@ class SendType:
     @staticmethod
     def list():
         return [
-            1, 2, 11, 12, 13, 14, 15
+            1, 2, 11, 12, 14, 15
         ]
