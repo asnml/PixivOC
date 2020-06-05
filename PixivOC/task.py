@@ -97,7 +97,7 @@ class BaseTaskStage:
 
     @property
     def msg(self):
-        return self._StageName, self.is_alive(), len(self._ParamsList), self.Total
+        return self._StageName, self.is_alive(), len(self._Data), self.Total
 
     def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
         raise Exception('Please override this function.')
