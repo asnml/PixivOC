@@ -74,6 +74,11 @@ class TaskManager:
         self._AutoSaveThread.daemon = True
         self._AutoSaveThread.start()
 
+    def exit(self):
+        for task in self.TaskMapping.values():  # type: BaseTask
+            task.make_sure_stop()
+        self._dump_tasks()
+
     @staticmethod
     def _get_timestamp() -> int:
         return int(datetime.now().timestamp())
@@ -125,7 +130,7 @@ class TaskManager:
             writing.append(task.export_storage().json())
         with open(DATA_FILE_NAME, 'w', encoding='utf-8') as file:
             json.dump(writing, file)
-        core_logger.info('Dump tasks.')
+        core_logger.debug('Dump tasks.')
 
     def start(self, tid: int) -> bool:
         for task_tid in self.TaskMapping.keys():
@@ -271,7 +276,14 @@ class Server:
             result = [False, 'Please login.']
 
         elif unit.command == Command.Exit:
-            pass
+            global Running
+            Running = False
+            reply_number = create_identification_number(unit.IdentificationNumber)
+            unit = SendMsgUnit(reply_number, SendType.Reply, True)
+            self._SendQueue.put(unit.data)
+            self._TaskManager.exit()
+            sleep(0.5)
+            return
 
         elif unit.command == Command.Login:
             result = TOKEN_MANAGER.login(

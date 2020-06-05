@@ -100,7 +100,7 @@ class DownloadThread:
     def make_sure_close(self):
         self.close()
         while self.is_alive():
-            pass
+            sleep(0.01)
         downloader_logger.debug('Download thread alive is False.')
 
 

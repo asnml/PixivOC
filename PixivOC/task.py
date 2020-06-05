@@ -1,5 +1,6 @@
 from asyncio import Future
 from typing import Any, Callable
+from threading import Lock
 from interface import SendType
 from structure import TaskReportUnit
 from mobileToken import TOKEN_MANAGER
@@ -43,6 +44,9 @@ class BaseTaskStage:
 
     def stop(self) -> None:
         return self.State.stop(self)
+
+    def make_sure_stop(self):
+        return self.State.make_sure_stop(self)
 
     def downloader_loop_over_callback(self, future: Future) -> None:
         core_logger.debug('Downloader over.')
@@ -108,6 +112,7 @@ class TokenTaskStage(BaseTaskStage):
                  stage_complete_callback_fn: Callable[[int], None]):
         super().__init__(params_list, data, stage_complete_callback_fn)
         self.stopped = False
+        self.Lock = Lock()
 
     def start(self):
         self.State.start(
@@ -116,7 +121,17 @@ class TokenTaskStage(BaseTaskStage):
             get_token_callback=self.get_token_callback
         )
 
+    def safe_stop(self):
+        self.Lock.acquire()
+        self.stopped = True
+        if self.DownloadThread is not None:
+            if self.DownloadThread.is_alive():
+                self.DownloadThread.make_sure_close()
+        self.State = WaitStart()
+        self.Lock.release()
+
     def get_token_callback(self, token: str):
+        self.Lock.acquire()
         if token == 0:
             self.State = WaitStart()
             return
@@ -129,6 +144,7 @@ class TokenTaskStage(BaseTaskStage):
             request_package_list
         )
         self.State = Downloading()
+        self.Lock.release()
         # When you request pixiv api interface,
         # you must be use sync downloader.
         # Use async downloader will raise ConnectionResetError exception.
@@ -238,6 +254,9 @@ class BaseTask:
         core_logger.info(f'Call task {self._TaskName} stop process.')
         return self._Stage.stop()
 
+    def make_sure_stop(self):
+        return self._Stage.make_sure_stop()
+
     def export_storage(self) -> StorageUnit:
         core_logger.debug(f'Export task {self._TaskName}.')
         return StorageUnit(
@@ -325,7 +344,11 @@ class TaskState:
 
     @staticmethod
     def stop(task_stage: BaseTaskStage):
-        raise Exception('Please override ths function.')
+        raise Exception('Please override this function.')
+
+    @staticmethod
+    def make_sure_stop(task_stage: BaseTaskStage):
+        raise Exception('Please override this function')
 
 
 class WaitStart(TaskState):
@@ -359,7 +382,11 @@ class WaitStart(TaskState):
 
     @staticmethod
     def stop(task_stage: BaseTaskStage):
-        print("Task not start, can't call this function.")
+        pass
+
+    @staticmethod
+    def make_sure_stop(task_stage: BaseTaskStage):
+        pass
 
 
 class WaitToken(TaskState):
@@ -379,7 +406,11 @@ class WaitToken(TaskState):
 
     @staticmethod
     def stop(task_stage: TokenTaskStage):
-        task_stage.stopped = True
+        task_stage.safe_stop()
+
+    @staticmethod
+    def make_sure_stop(task_stage: TokenTaskStage):
+        task_stage.safe_stop()
 
 
 class Downloading(TaskState):
@@ -400,6 +431,11 @@ class Downloading(TaskState):
     @staticmethod
     def stop(task_stage: BaseTaskStage):
         task_stage.DownloadThread.close()
+        task_stage.State = Stopped()
+
+    @staticmethod
+    def make_sure_stop(task_stage: BaseTaskStage):
+        task_stage.DownloadThread.make_sure_close()
         task_stage.State = Stopped()
 
 
@@ -434,4 +470,8 @@ class Stopped(TaskState):
 
     @staticmethod
     def stop(task_stage: BaseTaskStage):
-        print("Task has been stopped.")
+        pass
+
+    @staticmethod
+    def make_sure_stop(task_stage: BaseTaskStage):
+        pass
