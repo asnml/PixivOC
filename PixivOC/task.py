@@ -107,6 +107,7 @@ class TokenTaskStage(BaseTaskStage):
     def __init__(self, params_list: list, data: list,
                  stage_complete_callback_fn: Callable[[int], None]):
         super().__init__(params_list, data, stage_complete_callback_fn)
+        self.stopped = False
 
     def start(self):
         self.State.start(
@@ -119,6 +120,8 @@ class TokenTaskStage(BaseTaskStage):
         if token == 0:
             self.State = WaitStart()
             return
+        if self.stopped:
+            return
         request_package_list = self._create_request_package_list(token)
         self.DownloadThread = DownloadThread(self.downloader_single_request_callback, sync=True)
         self.DownloadThread.start(
@@ -129,7 +132,7 @@ class TokenTaskStage(BaseTaskStage):
         # When you request pixiv api interface,
         # you must be use sync downloader.
         # Use async downloader will raise ConnectionResetError exception.
-        # I don't know hwo to fixed it.
+        # I don't know how to fixed it.
 
     # **************************************
     # you should override following function
@@ -375,8 +378,8 @@ class WaitToken(TaskState):
         print("Task has been started.")
 
     @staticmethod
-    def stop(task_stage: BaseTaskStage):
-        print("Please call this function when the task state change to Downloading")
+    def stop(task_stage: TokenTaskStage):
+        task_stage.stopped = True
 
 
 class Downloading(TaskState):
