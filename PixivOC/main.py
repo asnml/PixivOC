@@ -11,7 +11,7 @@ from optional import ServerPort
 from TransportServer import SingleLinkServer
 from task import StorageUnit, BaseTask, BaseTaskStage
 from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
-from structure import PreSendUnit, TaskReportUnit, \
+from structure import PreSendUnit, \
     SendMsgUnit, AcceptMsgUnit, create_identification_number
 from taskTypes import TaskTypeList, WorkDetailsTask, SingleWorkTask, \
     UserWorksLinkTask, UserWorksTask
@@ -90,9 +90,6 @@ class TaskManager:
                 return task_cls
         return None
 
-    def _accept_task_report(self, unit: TaskReportUnit) -> None:
-        self._report(unit.convert())
-
     def _report(self, unit: PreSendUnit):
         identification_number = create_identification_number()
         send_unit = SendMsgUnit(identification_number, unit.SendType, unit.content)
@@ -121,7 +118,7 @@ class TaskManager:
             for task in data:
                 storage_unit = StorageUnit(*task)
                 task_cls = self._find_task(storage_unit.TaskType)
-                self.TaskMapping[storage_unit.TID] = task_cls(storage_unit, self._accept_task_report)
+                self.TaskMapping[storage_unit.TID] = task_cls(storage_unit)
             core_logger.info('Load tasks.')
 
     def _dump_tasks(self) -> None:
@@ -157,7 +154,6 @@ class TaskManager:
                 task.stop()
         if find is not None:
             del self.TaskMapping[find]
-            self._report(PreSendUnit(SendType.DeleteTask, find))
             return True
         else:
             return False
@@ -191,10 +187,9 @@ class TaskManager:
         storage_unit = StorageUnit(
             timestamp, task_name, type_id, False, 1, [keyword], [], save_path
         )
-        task = cls(storage_unit, self._accept_task_report)  # type: BaseTask
+        task = cls(storage_unit)  # type: BaseTask
         self.TaskMapping[timestamp] = task
         msg = task.msg  # type: tuple
-        self._report(PreSendUnit(SendType.CreateTask, timestamp))
         return (True, *msg)
 
 
