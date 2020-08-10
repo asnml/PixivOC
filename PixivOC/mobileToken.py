@@ -6,16 +6,11 @@ from hashlib import md5
 from datetime import datetime
 from json import dump, load, loads
 from typing import Callable
-from multiprocessing import Queue
 
 # Network
 from asyncio import Future
 from Download import DownloadThread, RequestPackage, ResultPackage
 from log import core_logger
-
-# Component
-from interface import SendType
-from structure import SendMsgUnit, create_identification_number
 
 
 class OperationFailedException(Exception):
@@ -74,19 +69,6 @@ class TokenManager:
     def set_refresh_token(self, refresh_token):
         self._RefreshToken = refresh_token
         core_logger.debug('Call function set_refresh_token.')
-
-    def set_send_queue(self, queue: Queue):
-        self._SendQueue = queue
-
-    def _send_notice_to_queue(self, b: bool):
-        if self._SendQueue is not None:  # type: Queue
-            unit = SendMsgUnit(
-                create_identification_number(),
-                SendType.TokenStatusUpdate,
-                b
-            )
-            if unit.effective:
-                self._SendQueue.put(unit.data)
 
     @property
     def msg(self) -> str:
@@ -161,7 +143,6 @@ class TokenManager:
             while self._SendTokenList:
                 callback = self._SendTokenList.pop()
                 callback(0)
-                self._send_notice_to_queue(False)
 
     def _extract_token(self, resp: str):
         try:
@@ -177,7 +158,6 @@ class TokenManager:
                                                'please check username and password and refresh token.')
         except OperationFailedException:
             core_logger.error('Operation failed, please check username and password and refresh token.')
-            self._send_notice_to_queue(False)
         except KeyError:
             # 该异常未被捕捉，异常级别应为 CRITICAL，应组织程序有序的退出
             core_logger.critical('Extract access_token error!', exc_info=True)
@@ -193,7 +173,6 @@ class TokenManager:
             }, file)
 
         self._Refreshing = False
-        self._send_notice_to_queue(True)
         self._send_token()
 
     def _send_token(self):
