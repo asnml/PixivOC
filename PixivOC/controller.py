@@ -176,7 +176,7 @@ class TaskManager:
         task = cls(storage_unit)  # type: BaseTask
         self.TaskMapping[timestamp] = task
         msg = task.msg  # type: tuple
-        return (True, *msg)
+        return True, msg
 
 
 class EnvironmentSetting:
