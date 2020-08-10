@@ -229,6 +229,8 @@ def start_requests_session(break_sign: SyncSign,
             resp = UnknownException(e)
             exception = True
         finally:
+            if break_loop:
+                break
             if exception:
                 child_fetch_callback(SyncFuture(ResultPackage(None, None, exception=resp)))
             else:
