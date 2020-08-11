@@ -24,6 +24,7 @@ class TaskState:
     WaitToken = 'WaitToken'
     Downloading = 'Downloading'
     Stopped = 'Stopped'
+    Over = 'Over'
 
 
 class StorageUnit:
@@ -91,6 +92,7 @@ class BaseTask:
 
         if self._Over:
             self._StageName = "Over"
+            self._State = TaskState.Over
 
         core_logger.info(f'Create task {self._TaskName}.')
 
@@ -126,6 +128,8 @@ class BaseTask:
             pass
         elif self._State == TaskState.Stopped:
             return self._start_stage()
+        elif self._State == TaskState.Over:
+            pass
 
     def _start(self) -> None:
         core_logger.info(f'Call task {self._TaskName} start function.')
@@ -139,6 +143,8 @@ class BaseTask:
         elif self._State == TaskState.Downloading:
             return self._stop()
         elif self._State == TaskState.Stopped:
+            pass
+        elif self._State == TaskState.Over:
             pass
 
     def _stop(self) -> None:
@@ -154,6 +160,8 @@ class BaseTask:
         elif self._State == TaskState.Downloading:
             return self._safe_stop()
         elif self._State == TaskState.Stopped:
+            pass
+        elif self._State == TaskState.Over:
             pass
 
     def _safe_stop(self):
