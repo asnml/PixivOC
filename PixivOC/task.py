@@ -1,14 +1,12 @@
+from os import listdir, mkdir, path
 from asyncio import Future
-from typing import Any, Callable
+from typing import Any
 from threading import Lock
-from interface import SendType
-from structure import TaskReportUnit
 from mobileToken import TOKEN_MANAGER
 from log import core_logger
 from Download import (
     DownloadThread,
     CLIENT_SESSION_PARAMS,
-    RequestPackageList,
     ExitState,
     ResultPackage
 )
@@ -21,179 +19,12 @@ class ParseResult:
         self.result = result
 
 
-class BaseTaskStage:
-    Increment = True
-
-    def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None]):
-        #         progress_update_fn: Callable[[str, int, int], None]):
-        self._StageName = 'DefaultStageName'
-        self.State = WaitStart()
-        self._TimeoutIncrement = self.Increment
-        self._ParamsList = params_list  # please note: this is not deepcopy variable
-        self._Data = data  # please note: this is not deepcopy variable
-        self._StageCompleteCallbackFn = stage_complete_callback_fn
-        # self._ProgressUpdateFn = progress_update_fn
-        self.DownloadThread = None
-
-        self.Total = len(self._ParamsList) + len(self._Data)
-        self._call_complete_fn = True
-
-    def start(self) -> None:
-        pass
-
-    def stop(self) -> None:
-        return self.State.stop(self)
-
-    def make_sure_stop(self):
-        return self.State.make_sure_stop(self)
-
-    def downloader_loop_over_callback(self, future: Future) -> None:
-        core_logger.debug('Downloader over.')
-        self.State = Stopped()
-        result_package = future.result()  # type: ResultPackage
-        if result_package.result == ExitState.Normal:
-            if self._is_complete():
-                return self._StageCompleteCallbackFn(ExitState.Normal)
-            else:
-                self.State = WaitStart()
-                return self._restart()
-        elif result_package.result == ExitState.Cancel:
-            return self._StageCompleteCallbackFn(ExitState.Cancel)
-
-    def _is_complete(self) -> bool:
-        if self._ParamsList:
-            return False
-        else:
-            return True
-
-    def _restart(self) -> None:
-        core_logger.debug('re-start.')
-        if self._TimeoutIncrement:
-            now_timeout = CLIENT_SESSION_PARAMS.total_timeout
-            CLIENT_SESSION_PARAMS.set_total_timeout(now_timeout+30)
-        return self.start()
-
-    def downloader_single_request_callback(self, future: Future) -> None:
-        result_package = future.result()  # type: ResultPackage
-        if result_package.ok:
-            parse_result = self._parse_request_result(result_package)
-            self._ParamsList.remove(parse_result.request_param)
-            # core_logger.debug(f'Progress: {len(self._ParamsList)}/{self._All}')
-            # self._ProgressUpdateFn(self._StageName, len(self._ParamsList), self.Total)
-            if parse_result.result is not None:
-                if type(parse_result.result) is list:
-                    self._Data.extend(parse_result.result)
-                else:
-                    self._Data.append(parse_result.result)
-        else:
-            # log or print exception
-            pass
-
-    def is_alive(self):
-        if self.DownloadThread is None:
-            return False
-        return self.DownloadThread.is_alive()
-
-    @property
-    def progress(self):
-        return len(self._ParamsList), self.Total
-
-    @property
-    def msg(self):
-        return self._StageName, self.is_alive(), len(self._Data), self.Total
-
-    def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
-        raise Exception('Please override this function.')
-
-
-class TokenTaskStage(BaseTaskStage):
-    def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn)
-        self.stopped = False
-        self.Lock = Lock()
-
-    def start(self):
-        self.State.start(
-            self,
-            need_token=True,
-            get_token_callback=self.get_token_callback
-        )
-
-    def safe_stop(self):
-        self.Lock.acquire()
-        self.stopped = True
-        if self.DownloadThread is not None:
-            if self.DownloadThread.is_alive():
-                self.DownloadThread.make_sure_close()
-        self.State = WaitStart()
-        self.Lock.release()
-
-    def get_token_callback(self, token: str):
-        self.Lock.acquire()
-        if token == 0:
-            self.State = WaitStart()
-            return
-        if self.stopped:
-            return
-        request_package_list = self._create_request_package_list(token)
-        self.DownloadThread = DownloadThread(self.downloader_single_request_callback, sync=True)
-        self.DownloadThread.start(
-            self.downloader_loop_over_callback,
-            request_package_list
-        )
-        self.State = Downloading()
-        self.Lock.release()
-        # When you request pixiv api interface,
-        # you must be use sync downloader.
-        # Use async downloader will raise ConnectionResetError exception.
-        # I don't know how to fixed it.
-
-    # **************************************
-    # you should override following function
-    # **************************************
-
-    def _create_request_package_list(self, token: str) -> RequestPackageList:
-        raise Exception('Please override this function.')
-
-    def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
-        raise Exception('Please override this function.')
-
-
-class NoTokenTaskStage(BaseTaskStage):
-    def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn)
-
-    def start(self):
-        self.State.start(
-            self,
-            request_package_list=self._create_request_package_list()
-        )
-
-    # **************************************
-    # you should override following function
-    # **************************************
-
-    def _create_request_package_list(self) -> RequestPackageList:
-        raise Exception('Please override this function.')
-
-    def _parse_request_result(self, result_package: ResultPackage) -> ParseResult:
-        raise Exception('Please override this function.')
-
-
-class TaskOverStage(BaseTaskStage):
-    def __init__(self, params_list: list, data: list,
-                 stage_complete_callback_fn: Callable[[int], None]):
-        super().__init__(params_list, data, stage_complete_callback_fn)
-        self._StageName = 'TaskOver'
-
-    def start(self) -> None:
-        pass
-
-    def stop(self) -> None:
-        pass
+class TaskState:
+    WaitStart = 'WaitStart'
+    WaitToken = 'WaitToken'
+    Downloading = 'Downloading'
+    Stopped = 'Stopped'
+    Over = 'Over'
 
 
 class StorageUnit:
@@ -223,11 +54,22 @@ class StorageUnit:
         ]
 
 
+def stage_wrapper(fn):
+    def wrapper(self, *args, **kwargs):
+        request_package_list = fn(self, *args, **kwargs)
+        self._DownloadThread = DownloadThread(self._parse_center)
+        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
+        self._State = TaskState.Downloading
+    return wrapper
+
+
 class BaseTask:
     TypeID = 0
     TypeName = 'BaseTask'
 
-    def __init__(self, storage: StorageUnit, accept_report_fn: Callable[[TaskReportUnit], None]):
+    Increment = True
+
+    def __init__(self, storage: StorageUnit):
         self._TID = storage.TID
         self._TaskName = storage.TaskName
         self._TaskType = self.TypeID
@@ -237,25 +79,32 @@ class BaseTask:
         self._Data = storage.Data
         self._SavePath = storage.SavePath
 
+        self._TimeoutIncrement = self.Increment
+
+        self._StageName = "NotSet"
+        self._DownloadThread = None
+        self._State = TaskState.WaitStart
+
+        abs_path = path.abspath(self._SavePath)
+        self._AbsSavePath = path.join(abs_path, self._TaskName)
+        if self._TaskName not in listdir(abs_path):
+            mkdir(self._AbsSavePath)
+
         if self._Over:
-            self._Stage = TaskOverStage(
-                self._ParamsList, self._Data, self._stage_complete_callback
-            )
-        else:
-            self._Stage = self._create_stage()
-        self._AcceptReportFn = accept_report_fn
+            self._StageName = "Over"
+            self._State = TaskState.Over
+
         core_logger.info(f'Create task {self._TaskName}.')
 
-    def start(self) -> None:
-        core_logger.info(f'Call task {self._TaskName} start function.')
-        return self._Stage.start()
+    @property
+    def progress(self):
+        return self._StageName, self._State, len(self._ParamsList)
 
-    def stop(self) -> None:
-        core_logger.info(f'Call task {self._TaskName} stop process.')
-        return self._Stage.stop()
-
-    def make_sure_stop(self):
-        return self._Stage.make_sure_stop()
+    @property
+    def msg(self):
+        return self._Over, self._TID, \
+               self._TaskName, self.TypeName, self._SavePath,\
+               self._StageName, self._State, len(self._ParamsList)
 
     def export_storage(self) -> StorageUnit:
         core_logger.debug(f'Export task {self._TaskName}.')
@@ -270,208 +119,186 @@ class BaseTask:
             self._SavePath
         )
 
-    # def _progress_update(self, stage_name: str, now: int, all_: int):
-    #     self._AcceptReportFn(TaskReportUnit(
-    #         SendType.TaskStatusUpdate, self._TID, [stage_name, now, all_]
-    #     ))
+    def start(self) -> None:
+        if self._State == TaskState.WaitStart:
+            return self._start_stage()
+        elif self._State == TaskState.WaitToken:
+            pass
+        elif self._State == TaskState.Downloading:
+            pass
+        elif self._State == TaskState.Stopped:
+            return self._start_stage()
+        elif self._State == TaskState.Over:
+            pass
 
-    def _stage_complete_callback(self, status_code: int) -> None:
+    def _start(self) -> None:
+        core_logger.info(f'Call task {self._TaskName} start function.')
+        self._start_stage()
+
+    def stop(self) -> None:
+        if self._State == TaskState.WaitStart:
+            pass
+        elif self._State == TaskState.WaitToken:
+            return self._stop()
+        elif self._State == TaskState.Downloading:
+            return self._stop()
+        elif self._State == TaskState.Stopped:
+            pass
+        elif self._State == TaskState.Over:
+            pass
+
+    def _stop(self) -> None:
+        core_logger.info(f'Call task {self._TaskName} stop function.')
+        self._DownloadThread.close()
+        self._State = TaskState.Stopped
+
+    def safe_stop(self):
+        if self._State == TaskState.WaitStart:
+            pass
+        elif self._State == TaskState.WaitToken:
+            return self._safe_stop()
+        elif self._State == TaskState.Downloading:
+            return self._safe_stop()
+        elif self._State == TaskState.Stopped:
+            pass
+        elif self._State == TaskState.Over:
+            pass
+
+    def _safe_stop(self):
+        core_logger.info(f'Call task {self._TaskName} safe stop function.')
+        self._DownloadThread.make_sure_close()
+        self._State = TaskState.Stopped
+
+    def _downloader_loop_over(self, future: Future):
+        core_logger.debug(f'{self._TaskName} Downloader over.')
+        self._State = TaskState.Stopped
+        result_package = future.result()  # type: ResultPackage
+        if result_package.result == ExitState.Normal:
+            if self._ParamsList:
+                self._State = TaskState.WaitStart
+                return self._restart()
+            else:
+                return self._stage_complete(ExitState.Normal)
+        elif result_package.result == ExitState.Cancel:
+            return self._stage_complete(ExitState.Cancel)
+
+    def _restart(self) -> None:
+        core_logger.debug(f'{self._TaskName} re-start.')
+        if self._TimeoutIncrement:
+            now_timeout = CLIENT_SESSION_PARAMS.total_timeout
+            CLIENT_SESSION_PARAMS.set_total_timeout(now_timeout+30)
+        return self._start_stage()
+
+    def _stage_complete(self, status_code: int) -> None:
         if status_code == ExitState.Normal:
             self._ParamsList = self._Data
             self._Data = []
-            self._CurrentStage = self._goto_stage()
-            self._Stage = self._create_stage()
-            if self._Stage is not None: self._Stage.start()
+            self._CurrentStage = self._set_stage()
+            if self._CurrentStage == -1:
+                self._Over = True
+                self._StageName = 'Over'
+                self._ParamsList = []
+                return
+            self._StageName = 'Not set'
+            self._start_stage()
         elif status_code == ExitState.Cancel:
             pass
 
-    def _task_over(self) -> BaseTaskStage:
-        result = self._return_value()
-        self._Over = True
-        self._AcceptReportFn(TaskReportUnit(SendType.TaskOver, self._TID, result))
-        return TaskOverStage(
-            self._ParamsList, self._Data, self._stage_complete_callback
-        )
+    def _parse_center(self, future: Future) -> None:
+        result_package = future.result()  # type: ResultPackage
+        if result_package.ok:
+            parse_result = self._distribute_parser(result_package)  # type: ParseResult
+            self._ParamsList.remove(parse_result.request_param)
+            if type(parse_result.result) is list:
+                self._Data.extend(parse_result.result)
+            else:
+                self._Data.append(parse_result.result)
+        else:
+            # log or print exception
+            pass
 
-    @property
-    def msg(self):
-        stage_name, is_alive, now, total = self._Stage.msg
-        return self._Over, self._TID, self._TaskName, self.TypeName, stage_name, is_alive, now, total, self._SavePath
+    def picture_parser(self, result_package: ResultPackage):
+        self._StageName = 'DownloadPicture'
+        with open(path.join(self._AbsSavePath, result_package.msg[0]), 'wb') as file:
+            file.write(result_package.result)
+        return ParseResult(result_package.msg[1], result_package.msg[0])
 
     # ******************************************
     # you should override the following function
     # ******************************************
 
-    def _create_stage(self) -> BaseTaskStage or None:
-        # At end must use this form:
-        # if self._CurrentStage == some:
-        #     return self._task_over()
+    def _set_stage(self) -> int:
         raise Exception('Please override this function.')
 
-    def _return_value(self) -> Any:
-        """
-        Note that the return value must be serializable.
-        :return:
-        """
+    def _start_stage(self):
         raise Exception('Please override this function.')
 
-    # ***************************************
-    # you can override the following function
-    # ***************************************
-
-    def _goto_stage(self) -> int:
-        """
-        Function of unconditional jump to any stage.
-        Add your statement in this function,
-        and then return a int value that representative process stage.
-        :return:
-        """
-        return self._CurrentStage + 1
-
-
-'''
-Task State
-'''
-
-
-class TaskState:
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-        raise Exception('Please override ths function.')
-
-    @staticmethod
-    def stop(task_stage: BaseTaskStage):
+    def _distribute_parser(self, result_package: ResultPackage) -> ParseResult:
         raise Exception('Please override this function.')
 
-    @staticmethod
-    def make_sure_stop(task_stage: BaseTaskStage):
-        raise Exception('Please override this function')
+
+def token_stage_wrapper(fn):
+    def wrapper(self, *args, **kwargs):
+        self._Lock.acquire()
+        if self._stopped:
+            return
+        request_package_list = fn(self, *args, **kwargs)
+        self._DownloadThread = DownloadThread(self._parse_center, sync=True)
+        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
+        self._State = TaskState.Downloading
+        self._Lock.release()
+        # When you request pixiv api interface,
+        # you must be use sync downloader.
+        # Use async downloader will raise ConnectionResetError exception.
+        # I don't know how to fixed it.
+    return wrapper
 
 
-class WaitStart(TaskState):
-    @staticmethod
-    def str():
-        return 'WaitStart'
+class TokenTask(BaseTask):
+    def __init__(self, storage: StorageUnit):
+        super().__init__(storage)
+        self._wait_token_fn = None
+        self._wait_token_fn_args = ()
+        self._wait_token_fn_kwargs = {}
 
-    def __str__(self):
-        return 'WaitStart'
+        self._stopped = False
+        self._Lock = Lock()
 
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-
-        if need_token:
-            assert get_token_callback is not None
-            token = TOKEN_MANAGER.get_token(get_token_callback)
-            if token != '':
-                get_token_callback(token)
-                task_stage.State = Downloading()
-            else:
-                task_stage.State = WaitToken()
-
+    def _get_token(self, fn, *args, **kwargs):
+        token = TOKEN_MANAGER.get_token(self.get_token_callback)
+        if token == "":
+            self._wait_token_fn = fn
+            self._wait_token_fn_args = args
+            self._wait_token_fn_kwargs = kwargs
         else:
-            assert request_package_list is not None
-            task_stage.DownloadThread = DownloadThread(task_stage.downloader_single_request_callback)
-            task_stage.DownloadThread.start(task_stage.downloader_loop_over_callback, request_package_list)
-            task_stage.State = Downloading()
+            fn(token, *args, **kwargs)
 
-    @staticmethod
-    def stop(task_stage: BaseTaskStage):
-        pass
+    def get_token_callback(self, token: str):
+        self._wait_token_fn(
+            *(token, *self._wait_token_fn_args),
+            **self._wait_token_fn_kwargs
+        )
 
-    @staticmethod
-    def make_sure_stop(task_stage: BaseTaskStage):
-        pass
+    def _start(self) -> None:
+        self._Lock.acquire()
+        self._stopped = False
+        self._start_stage()
+        self._Lock.release()
 
+    def _stop(self) -> None:
+        self._Lock.acquire()
+        self._stopped = True
+        if self._DownloadThread is not None:
+            if self._DownloadThread.is_alive():
+                self._DownloadThread.close()
+        self.State = TaskState.Stopped
+        self._Lock.release()
 
-class WaitToken(TaskState):
-    @staticmethod
-    def str():
-        return 'WaitToken'
-
-    def __str__(self):
-        return 'WaitToken'
-
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-        print("Task has been started.")
-
-    @staticmethod
-    def stop(task_stage: TokenTaskStage):
-        task_stage.safe_stop()
-
-    @staticmethod
-    def make_sure_stop(task_stage: TokenTaskStage):
-        task_stage.safe_stop()
-
-
-class Downloading(TaskState):
-    @staticmethod
-    def str():
-        return 'Downloading'
-
-    def __str__(self):
-        return 'Downloading'
-
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-        print("Task has been started.")
-
-    @staticmethod
-    def stop(task_stage: BaseTaskStage):
-        task_stage.DownloadThread.close()
-        task_stage.State = Stopped()
-
-    @staticmethod
-    def make_sure_stop(task_stage: BaseTaskStage):
-        task_stage.DownloadThread.make_sure_close()
-        task_stage.State = Stopped()
-
-
-class Stopped(TaskState):
-    @staticmethod
-    def str():
-        return 'Stopped'
-
-    def __str__(self):
-        return 'Stopped'
-
-    @staticmethod
-    def start(task_stage: BaseTaskStage,
-              need_token: bool = False,
-              request_package_list: RequestPackageList = None,
-              get_token_callback=None):
-
-        if need_token:
-            assert get_token_callback is not None
-            token = TOKEN_MANAGER.get_token(get_token_callback)
-            if token != '':
-                get_token_callback(token)
-                task_stage.State = Downloading()
-            else:
-                task_stage.State = WaitToken()
-
-        else:
-            assert request_package_list is not None
-            task_stage.DownloadThread = DownloadThread(task_stage.downloader_single_request_callback)
-            task_stage.DownloadThread.start(task_stage.downloader_loop_over_callback, request_package_list)
-            task_stage.State = Downloading()
-
-    @staticmethod
-    def stop(task_stage: BaseTaskStage):
-        pass
-
-    @staticmethod
-    def make_sure_stop(task_stage: BaseTaskStage):
-        pass
+    def _safe_stop(self) -> None:
+        self._Lock.acquire()
+        self._stopped = True
+        if self._DownloadThread is not None:
+            if self._DownloadThread.is_alive():
+                self._DownloadThread.make_sure_close()
+        self._State = TaskState.Stopped
+        self._Lock.release()

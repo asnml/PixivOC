@@ -3,28 +3,20 @@ from os import path, listdir
 from time import sleep
 from datetime import datetime
 from threading import Thread, Lock
-from multiprocessing import Queue
 from log import core_logger
 from mobileToken import TOKEN_MANAGER
-from interface import SendType, Command
-from optional import ServerPort
-from TransportServer import SingleLinkServer
-from task import StorageUnit, BaseTask, BaseTaskStage
+from task import StorageUnit
 from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
-from structure import PreSendUnit, TaskReportUnit, \
-    SendMsgUnit, AcceptMsgUnit, create_identification_number
-from taskTypes import TaskTypeList, WorkDetailsTask, SingleWorkTask, \
-    UserWorksLinkTask, UserWorksTask
+from taskTypes import BaseTask, TaskTypeList, SingleWork, UserWorks
 
+
+ServerPort = 13575
 
 DATA_FILE_NAME = 'Data.json'
 SLEEP_TIME = 0.1
 
-
 SaveLock = Lock()
 AutoSaveTime = 300  # unit: second
-
-Running = True
 
 
 class Check:
@@ -65,9 +57,8 @@ class Check:
 
 
 class TaskManager:
-    def __init__(self, send_queue: Queue):
+    def __init__(self):
         self.TaskMapping = dict()  # tid: instance
-        self._SendQueue = send_queue
         self._load_tasks()
 
         self._AutoSaveThread = Thread(target=self._auto_save_thread)
@@ -76,7 +67,7 @@ class TaskManager:
 
     def exit(self):
         for task in self.TaskMapping.values():  # type: BaseTask
-            task.make_sure_stop()
+            task.safe_stop()
         self._dump_tasks()
 
     @staticmethod
@@ -89,20 +80,6 @@ class TaskManager:
             if type_id == task_cls.TypeID:
                 return task_cls
         return None
-
-    def _accept_task_report(self, unit: TaskReportUnit) -> None:
-        self._report(unit.convert())
-
-    def _report(self, unit: PreSendUnit):
-        identification_number = create_identification_number()
-        send_unit = SendMsgUnit(identification_number, unit.SendType, unit.content)
-        if unit.SendType == SendType.CreateTask or \
-                unit.SendType == SendType.DeleteTask or unit.SendType == SendType.TaskOver:
-            SaveLock.acquire()
-            self._dump_tasks()
-            SaveLock.release()
-        if send_unit.effective:
-            self._SendQueue.put(send_unit.data)
 
     def _auto_save_thread(self):
         while True:
@@ -121,7 +98,7 @@ class TaskManager:
             for task in data:
                 storage_unit = StorageUnit(*task)
                 task_cls = self._find_task(storage_unit.TaskType)
-                self.TaskMapping[storage_unit.TID] = task_cls(storage_unit, self._accept_task_report)
+                self.TaskMapping[storage_unit.TID] = task_cls(storage_unit)
             core_logger.info('Load tasks.')
 
     def _dump_tasks(self) -> None:
@@ -157,7 +134,6 @@ class TaskManager:
                 task.stop()
         if find is not None:
             del self.TaskMapping[find]
-            self._report(PreSendUnit(SendType.DeleteTask, find))
             return True
         else:
             return False
@@ -186,16 +162,15 @@ class TaskManager:
                 keyword = int(keyword)
             except ValueError:
                 return False, []
-        type_id = UserWorksTask.TypeID
+        type_id = cls.TypeID
         timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
         storage_unit = StorageUnit(
             timestamp, task_name, type_id, False, 1, [keyword], [], save_path
         )
-        task = cls(storage_unit, self._accept_task_report)  # type: BaseTask
+        task = cls(storage_unit)  # type: BaseTask
         self.TaskMapping[timestamp] = task
         msg = task.msg  # type: tuple
-        self._report(PreSendUnit(SendType.CreateTask, timestamp))
-        return (True, *msg)
+        return True, msg
 
 
 class EnvironmentSetting:
@@ -238,11 +213,11 @@ class EnvironmentSetting:
             assert type(b) is bool
         except AssertionError:
             return False
-        BaseTaskStage.Increment = b
+        BaseTask.Increment = b
         return True
 
     @staticmethod
-    def get_setting():
+    def get_setting() -> [str, str, int, int, int]:
         proxy, proxy_address = PROXY_MANAGER.get_setting()
         timeout = CLIENT_SESSION_PARAMS.total_timeout
         concurrency_number = CLIENT_SESSION_PARAMS.concurrency_number
@@ -251,130 +226,110 @@ class EnvironmentSetting:
 
 
 class Server:
-    def __init__(self, task_manager: TaskManager, send_queue: Queue, accept_queue: Queue):
-        self._TaskManager = task_manager
-        self._SendQueue = send_queue
-        self._AcceptQueue = accept_queue
+    def __init__(self):
+        self._TaskManager = TaskManager()
 
-    def start(self):
-        self.loop_check_accept_queue()
+    '''
+    sys
+    '''
 
-    def loop_check_accept_queue(self):
-        while Running:
-            if not self._AcceptQueue.empty():
-                content = self._AcceptQueue.get()
-                unit = AcceptMsgUnit(content)
-                if unit.effective:
-                    self.reply(unit)
-            else:
-                sleep(SLEEP_TIME)
+    def exit(self) -> bool:
+        pass
 
-    def reply(self, unit: AcceptMsgUnit):
-        result = ''
+    '''
+    user
+    '''
 
-        if not TOKEN_MANAGER.has_refresh_token and unit.command > 10:
-            result = [False, 'Please login.']
-
-        elif unit.command == Command.Exit:
-            global Running
-            Running = False
-            reply_number = create_identification_number(unit.IdentificationNumber)
-            unit = SendMsgUnit(reply_number, SendType.Reply, True)
-            self._SendQueue.put(unit.data)
-            self._TaskManager.exit()
-            sleep(0.5)
-            return
-
-        elif unit.command == Command.Login:
-            result = TOKEN_MANAGER.login(
-                unit.data['Account'],
-                unit.data['Password']
-            )
-
-        elif unit.command == Command.Logout:
-            pass
-
-        elif unit.command == Command.IsLogin:
-            result = TOKEN_MANAGER.has_refresh_token
-
-        elif unit.command == Command.SetProxyMode:
-            result = EnvironmentSetting.set_proxy_mode(
-                unit.data['ProxyMode'],
-                unit.data['Proxy']
-            )
-
-        elif unit.command == Command.SetTimeout:
-            result = EnvironmentSetting.set_timeout(unit.data['Timeout'])
-
-        elif unit.command == Command.SetConcurrencyNumber:
-            result = EnvironmentSetting.set_concurrency_number(unit.data['ConcurrencyNumber'])
-
-        elif unit.command == Command.SetIntervalTime:
-            result = EnvironmentSetting.set_interval_time(unit.data['IntervalTime'])
-
-        elif unit.command == Command.SetIncrement:
-            result = EnvironmentSetting.set_increment(unit.data['Increment'])
-
-        elif unit.command == Command.GetEnvironment:
-            result = EnvironmentSetting.get_setting()
-
-        elif unit.command == Command.StartTask:
-            result = self._TaskManager.start(unit.data['TID'])
-
-        elif unit.command == Command.StopTask:
-            result = self._TaskManager.stop(unit.data['TID'])
-
-        elif unit.command == Command.DeleteTask:
-            result = self._TaskManager.delete(unit.data['TID'])
-
-        elif unit.command == Command.TaskDetails:
-            result = self._TaskManager.details(unit.data['TID'])
-
-        elif unit.command == Command.AllTaskDetails:
-            result = self._TaskManager.all_task_details()
-
-        elif unit.command == Command.AddWorkDetailsTask:
-            result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], '',
-                True, True, WorkDetailsTask
-            )
-
-        elif unit.command == Command.AddSingleWorkTask:
-            result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], unit.data['SavePath'],
-                True, False, SingleWorkTask
-            )
-
-        elif unit.command == Command.AddUserWorksLinkTask:
-            result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], '',
-                True, True, UserWorksLinkTask
-            )
-
-        elif unit.command == Command.AddUserWorksTask:
-            result = self._TaskManager.add_single_keyword_task(
-                unit.data['KeyWord'], unit.data['TaskName'], unit.data['SavePath'],
-                True, False, UserWorksTask
-            )
-
-        reply_number = create_identification_number(unit.IdentificationNumber)
-        unit = SendMsgUnit(reply_number, SendType.Reply, result)
-        self._SendQueue.put(unit.data)
-
-
-class Run:
     @staticmethod
-    def run():
-        Check.assert_task_cls_meet_specifications()
-        send_queue, accept_queue = Queue(), Queue()
-        task_manager = TaskManager(send_queue)
-        TOKEN_MANAGER.set_send_queue(send_queue)
-        transport_server = SingleLinkServer(send_queue, accept_queue, ServerPort)
-        transport_server.daemon = True
-        transport_server.start()
-        server = Server(task_manager, send_queue, accept_queue)
-        server.start()
+    def login(account: str, password: str) -> bool:
+        return TOKEN_MANAGER.login(account, password)
 
+    @staticmethod
+    def refresh_token():
+        if not TOKEN_MANAGER.has_refresh_token:
+            return False
+        return TOKEN_MANAGER.refresh_auth_token()
 
-if __name__ == '__main__':
-    Run.run()
+    def logout(self) -> bool:
+        pass
+
+    @staticmethod
+    def is_login() -> bool:
+        return TOKEN_MANAGER.has_refresh_token
+
+    @staticmethod
+    def token_msg() -> str:
+        return TOKEN_MANAGER.msg
+
+    '''
+    environment
+    '''
+
+    @staticmethod
+    def set_proxy_mode(mode: int, address: str) -> bool:
+        return EnvironmentSetting.set_proxy_mode(mode, address)
+
+    @staticmethod
+    def set_timeout(timeout: int) -> bool:
+        return EnvironmentSetting.set_timeout(timeout)
+
+    @staticmethod
+    def set_concurrency_number(number: int) -> bool:
+        return EnvironmentSetting.set_concurrency_number(number)
+
+    @staticmethod
+    def set_interval_time(second: int) -> bool:
+        return EnvironmentSetting.set_interval_time(second)
+
+    @staticmethod
+    def set_increment(increment: bool) -> bool:
+        return EnvironmentSetting.set_increment(increment)
+
+    @staticmethod
+    def get_environment() -> tuple:
+        return EnvironmentSetting.get_setting()
+
+    '''
+    operation
+    '''
+
+    def start_task(self, tid: int) -> (bool, str):
+        if not TOKEN_MANAGER.has_refresh_token:
+            return False, 'Please login.'
+        return self._TaskManager.start(tid), ""
+
+    def stop_task(self, tid: int) -> (bool, str):
+        if not TOKEN_MANAGER.has_refresh_token:
+            return False, 'Please login.'
+        return self._TaskManager.stop(tid), ""
+
+    def delete_task(self, tid: int) -> (bool, str):
+        if not TOKEN_MANAGER.has_refresh_token:
+            return False, 'Please login.'
+        return self._TaskManager.delete(tid), ""
+
+    def task_details(self, tid: int) -> list:
+        return self._TaskManager.details(tid)
+
+    def all_task_details(self) -> list:
+        return self._TaskManager.all_task_details()
+
+    '''
+    create
+    '''
+
+    def single_work(self, keyword: str, task_name: str, save_path: str):
+        return self._TaskManager.add_single_keyword_task(
+            keyword, task_name, save_path, True, False, SingleWork
+        )
+
+    def user_works(self, keyword: str, task_name: str, save_path: str):
+        return self._TaskManager.add_single_keyword_task(
+            keyword, task_name, save_path, True, False, UserWorks
+        )
+
+    def work_details(self):
+        pass
+
+    def user_works_link(self):
+        pass
