@@ -72,6 +72,8 @@ class TokenManager:
 
     @property
     def msg(self) -> str:
+        if self._RefreshToken is None:
+            return "You haven't logged in yet."
         update_time = datetime.fromtimestamp(self._AccessTokenUpdateTime).strftime('%Y-%m-%d %H:%M:%S')
         return f"AccessToken: {self._AccessToken}\n" \
                f"RefreshToken: {self._RefreshToken}\n" \
