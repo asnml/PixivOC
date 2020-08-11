@@ -106,11 +106,10 @@ TaskDetils = [
     TID: int,
     TaskName: str,
     TaskType: str,
-    TaskStageName: str,
-    Running: bool,
-    Now: int,
-    Total: int,
-    SavePath: str
+    SavePath: str,
+    StageName: str,
+    Stage: str,
+    Less: int
 ]
 ```
 

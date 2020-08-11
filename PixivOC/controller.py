@@ -5,13 +5,9 @@ from datetime import datetime
 from threading import Thread, Lock
 from log import core_logger
 from mobileToken import TOKEN_MANAGER
-from task import StorageUnit, BaseTask, BaseTaskStage
+from task import StorageUnit
 from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
-from taskTypes import (
-    TaskTypeList,
-    SingleWorkTask,
-    UserWorksTask
-)
+from taskTypes import BaseTask, TaskTypeList, SingleWork, UserWorks
 
 
 ServerPort = 13575
@@ -21,8 +17,6 @@ SLEEP_TIME = 0.1
 
 SaveLock = Lock()
 AutoSaveTime = 300  # unit: second
-
-Running = True
 
 
 class Check:
@@ -73,7 +67,7 @@ class TaskManager:
 
     def exit(self):
         for task in self.TaskMapping.values():  # type: BaseTask
-            task.make_sure_stop()
+            task.safe_stop()
         self._dump_tasks()
 
     @staticmethod
@@ -168,7 +162,7 @@ class TaskManager:
                 keyword = int(keyword)
             except ValueError:
                 return False, []
-        type_id = UserWorksTask.TypeID
+        type_id = cls.TypeID
         timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
         storage_unit = StorageUnit(
             timestamp, task_name, type_id, False, 1, [keyword], [], save_path
@@ -219,7 +213,7 @@ class EnvironmentSetting:
             assert type(b) is bool
         except AssertionError:
             return False
-        BaseTaskStage.Increment = b
+        BaseTask.Increment = b
         return True
 
     @staticmethod
@@ -326,12 +320,12 @@ class Server:
 
     def single_work(self, keyword: str, task_name: str, save_path: str):
         return self._TaskManager.add_single_keyword_task(
-            keyword, task_name, save_path, True, False, SingleWorkTask
+            keyword, task_name, save_path, True, False, SingleWork
         )
 
     def user_works(self, keyword: str, task_name: str, save_path: str):
         return self._TaskManager.add_single_keyword_task(
-            keyword, task_name, save_path, True, False, UserWorksTask
+            keyword, task_name, save_path, True, False, UserWorks
         )
 
     def work_details(self):
