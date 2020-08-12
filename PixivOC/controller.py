@@ -97,7 +97,7 @@ class TaskManager:
                 data = json.load(file)
             for task in data:
                 storage_unit = StorageUnit(*task)
-                task_cls = self._find_task(storage_unit.TaskType)
+                task_cls = self._find_task(storage_unit.TypeID)
                 self.TaskMapping[storage_unit.TID] = task_cls(storage_unit)
             core_logger.info('Load tasks.')
 

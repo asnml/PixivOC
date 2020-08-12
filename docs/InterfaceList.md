@@ -1,6 +1,6 @@
 **return format**
 
-```json
+```
 {
     "status": bool,
     "result": any
@@ -100,12 +100,12 @@
 
 `TaskDetails` 是一个列表，其包含了一个任务的属性。
 
-```python
+```
 TaskDetils = [
     Over: bool,
     TID: int,
     TaskName: str,
-    TaskType: str,
+    TypeName: str,
     SavePath: str,
     StageName: str,
     Stage: str,

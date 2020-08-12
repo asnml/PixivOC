@@ -28,11 +28,11 @@ class TaskState:
 
 
 class StorageUnit:
-    def __init__(self, tid: int, task_name: str, task_type: int, over: bool,
+    def __init__(self, tid: int, task_name: str, type_id: int, over: bool,
                  current_stage: int, params_list: list, data: list, save_path: str):
         self.TID = tid
         self.TaskName = task_name
-        self.TaskType = task_type
+        self.TypeID = type_id
         self.Over = over
         self.CurrentStage = current_stage
         if not data:  # if list of data is empty
@@ -45,7 +45,7 @@ class StorageUnit:
         return [
             self.TID,
             self.TaskName,
-            self.TaskType,
+            self.TypeID,
             self.Over,
             self.CurrentStage,
             self.ParamsList,
@@ -72,7 +72,6 @@ class BaseTask:
     def __init__(self, storage: StorageUnit):
         self._TID = storage.TID
         self._TaskName = storage.TaskName
-        self._TaskType = self.TypeID
         self._Over = storage.Over
         self._CurrentStage = storage.CurrentStage
         self._ParamsList = storage.ParamsList
@@ -111,7 +110,7 @@ class BaseTask:
         return StorageUnit(
             self._TID,
             self._TaskName,
-            self._TaskType,
+            self.TypeID,
             self._Over,
             self._CurrentStage,
             self._ParamsList,
