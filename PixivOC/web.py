@@ -176,19 +176,19 @@ def delete_task() -> dict:
     return wrap_return_value(True, server.delete_task(*args_list))
 
 
-@app.route('/operation/taskDetails')
+@app.route('/operation/taskDetail')
 def task_details() -> dict:
     b, args_list = extract_args([
         ['tid', int]
     ])
     if b is False:
         return wrap_return_value(False, None)
-    return wrap_return_value(True, server.task_details(*args_list))
+    return wrap_return_value(True, server.task_detail(*args_list))
 
 
-@app.route('/operation/allTaskDetails')
+@app.route('/operation/allTaskDetail')
 def all_task_details() -> dict:
-    return wrap_return_value(True, server.all_task_details())
+    return wrap_return_value(True, server.all_task_detail())
 
 
 '''

@@ -138,7 +138,7 @@ class TaskManager:
         else:
             return False
 
-    def details(self, tid) -> list:
+    def detail(self, tid) -> list:
         for task_tid in self.TaskMapping.keys():
             if tid == task_tid:
                 task = self.TaskMapping[task_tid]  # type: BaseTask
@@ -146,7 +146,7 @@ class TaskManager:
                 return msg
         return []
 
-    def all_task_details(self) -> list:
+    def all_task_detail(self) -> list:
         return [task.msg for task in self.TaskMapping.values()]
 
     # *********************
@@ -308,11 +308,11 @@ class Server:
             return False, 'Please login.'
         return self._TaskManager.delete(tid), ""
 
-    def task_details(self, tid: int) -> list:
-        return self._TaskManager.details(tid)
+    def task_detail(self, tid: int) -> list:
+        return self._TaskManager.detail(tid)
 
-    def all_task_details(self) -> list:
-        return self._TaskManager.all_task_details()
+    def all_task_detail(self) -> list:
+        return self._TaskManager.all_task_detail()
 
     '''
     create
