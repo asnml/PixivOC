@@ -20,7 +20,6 @@
 - requests
 - aiohttp
 - flask
-- flask_cors
 
 
 
