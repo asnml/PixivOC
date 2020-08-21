@@ -84,6 +84,7 @@ class BaseTask:
         self._StageName = "NotSet"
         self._DownloadThread = None
         self._State = TaskState.WaitStart
+        self._remain = len(self._ParamsList)
 
         abs_path = path.abspath(self._SavePath)
         if path.exists(abs_path):
@@ -103,13 +104,13 @@ class BaseTask:
 
     @property
     def progress(self):
-        return self._StageName, self._State, len(self._ParamsList)
+        return self._StageName, self._State, self._remain
 
     @property
     def msg(self):
         return self._Over, self._TID, \
                self._TaskName, self.TypeName, self._SavePath,\
-               self._StageName, self._State, len(self._ParamsList)
+               self._StageName, self._State, self._remain
 
     def export_storage(self) -> StorageUnit:
         core_logger.debug(f'Export task {self._TaskName}.')
@@ -204,6 +205,7 @@ class BaseTask:
         if status_code == ExitState.Normal:
             self._ParamsList = self._Data
             self._Data = []
+            self._remain = len(self._ParamsList)
             self._CurrentStage = self._set_stage()
             if self._CurrentStage == -1:
                 self._Over = True
@@ -220,6 +222,7 @@ class BaseTask:
         if result_package.ok:
             parse_result = self._distribute_parser(result_package)  # type: ParseResult
             self._ParamsList.remove(parse_result.request_param)
+            self._remain -= 1
             if type(parse_result.result) is list:
                 self._Data.extend(parse_result.result)
             else:
