@@ -25,6 +25,7 @@ class TaskState:
     Downloading = 'Downloading'
     Stopped = 'Stopped'
     Over = 'Over'
+    Error = 'Error'
 
 
 class StorageUnit:
@@ -85,13 +86,18 @@ class BaseTask:
         self._State = TaskState.WaitStart
 
         abs_path = path.abspath(self._SavePath)
-        self._AbsSavePath = path.join(abs_path, self._TaskName)
-        if self._TaskName not in listdir(abs_path):
-            mkdir(self._AbsSavePath)
+        if path.exists(abs_path):
+            self._AbsSavePath = path.join(abs_path, self._TaskName)
+            if self._TaskName not in listdir(abs_path):
+                mkdir(self._AbsSavePath)
 
-        if self._Over:
-            self._StageName = "Over"
-            self._State = TaskState.Over
+            if self._Over:
+                self._StageName = "Over"
+                self._State = TaskState.Over
+        else:
+            self._Over = True
+            self._StageName = "Error"
+            self._State = TaskState.Error
 
         core_logger.info(f'Create task {self._TaskName}.')
 
@@ -129,6 +135,8 @@ class BaseTask:
             return self._start_stage()
         elif self._State == TaskState.Over:
             pass
+        elif self._State == TaskState.Error:
+            pass
 
     def _start(self) -> None:
         core_logger.info(f'Call task {self._TaskName} start function.')
@@ -144,6 +152,8 @@ class BaseTask:
         elif self._State == TaskState.Stopped:
             pass
         elif self._State == TaskState.Over:
+            pass
+        elif self._State == TaskState.Error:
             pass
 
     def _stop(self) -> None:
@@ -161,6 +171,8 @@ class BaseTask:
         elif self._State == TaskState.Stopped:
             pass
         elif self._State == TaskState.Over:
+            pass
+        elif self._State == TaskState.Error:
             pass
 
     def _safe_stop(self):
