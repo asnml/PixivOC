@@ -15,9 +15,9 @@
 
 **sys**
 
-| Path | Parameter | Return |
-| :--: | :-------: | :----: |
-| exit |           |  True  |
+| Path | Parameter | Need login | Return |
+| :--: | :-------: | :--------: | :----: |
+| exit |           |   False    |  True  |
 
 返回值说明
 
@@ -27,13 +27,13 @@
 
 **user**
 
-|     Path     |            Parameter            | Return |
-| :----------: | :-----------------------------: | :----: |
-|    login     | account: str<br />password: str |  True  |
-|    logout    |                                 |  True  |
-| refreshToken |                                 |  bool  |
-|   isLogin    |                                 |  bool  |
-|   tokenMsg   |                                 |  str   |
+|     Path     |            Parameter            | Need login | Return |
+| :----------: | :-----------------------------: | :--------: | :----: |
+|    login     | account: str<br />password: str |   False    |  True  |
+|    logout    |                                 |   False    |  True  |
+| refreshToken |                                 |   False    |  bool  |
+|   isLogin    |                                 |   False    |  bool  |
+|   tokenMsg   |                                 |   False    |  str   |
 
 返回值说明
 
@@ -47,14 +47,14 @@
 
 **environment**
 
-|         Path         |          Parameter          |           Return            |
-| :------------------: | :-------------------------: | :-------------------------: |
-|     setProxyMode     | mode: int<br />address: str |            bool             |
-|      setTimeout      |        timeout: int         |            bool             |
-| setConcurrencyNumber |         number: int         |            bool             |
-|   setIntervalTime    |         second: int         |            bool             |
-|     setIncrement     |       increment: bool       |            bool             |
-|    getEnvironment    |                             | [ str, str, int, int, int ] |
+|         Path         |          Parameter          | Need login |           Return            |
+| :------------------: | :-------------------------: | :--------: | :-------------------------: |
+|     setProxyMode     | mode: int<br />address: str |   False    |            bool             |
+|      setTimeout      |        timeout: int         |   False    |            bool             |
+| setConcurrencyNumber |         number: int         |   False    |            bool             |
+|   setIntervalTime    |         second: int         |   False    |            bool             |
+|     setIncrement     |       increment: bool       |   False    |            bool             |
+|    getEnvironment    |                             |   False    | [ str, str, int, int, int ] |
 
 `setProxyMode` 可选值及其运行模式：
 
@@ -82,13 +82,13 @@
 
 **operation**
 
-|      Path      | Parameter |              Return               |
-| :------------: | :-------: | :-------------------------------: |
-|   startTask    | tid: int  |           [ bool, str ]           |
-|    stopTask    | tid: int  |           [ bool, str ]           |
-|   deleteTask   | tid: int  |           [ bool, str ]           |
-|  taskDetails   | tid: int  |            TaskDetails            |
-| allTaskDetails |           | [ TaskDetails, TaskDetails, ... ] |
+|      Path      | Parameter | Need login |              Return               |
+| :------------: | :-------: | :--------: | :-------------------------------: |
+|   startTask    | tid: int  |    True    |           [ bool, str ]           |
+|    stopTask    | tid: int  |    True    |           [ bool, str ]           |
+|   deleteTask   | tid: int  |    True    |           [ bool, str ]           |
+|  taskDetails   | tid: int  |   False    |            TaskDetails            |
+| allTaskDetails |           |   False    | [ TaskDetails, TaskDetails, ... ] |
 
 返回值说明：
 
@@ -117,10 +117,10 @@ TaskDetils = [
 
 **create**
 
-|    Path    |                     Parameter                      |                    Return                    |
-| :--------: | :------------------------------------------------: | :------------------------------------------: |
-| singleWork | keyWord: str<br />taskName: str<br />savePath: str | [ False, [] ] or <br />[ True, TaskDetails ] |
-| userWorks  | keyWord: str<br />taskName: str<br />savePath: str | [ False, [] ] or <br />[ True, TaskDetails ] |
+|    Path    |                     Parameter                      | Need login |                    Return                    |
+| :--------: | :------------------------------------------------: | :--------: | :------------------------------------------: |
+| singleWork | keyWord: str<br />taskName: str<br />savePath: str |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
+| userWorks  | keyWord: str<br />taskName: str<br />savePath: str |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
 
 返回值说明：
 
