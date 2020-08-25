@@ -86,7 +86,7 @@
 | :------------: | :-------: | :--------: | :-------------------------------: |
 |   startTask    | tid: int  |    True    |           [ bool, str ]           |
 |    stopTask    | tid: int  |    True    |           [ bool, str ]           |
-|   deleteTask   | tid: int  |    True    |           [ bool, str ]           |
+|   deleteTask   | tid: int  |   False    |           [ bool, str ]           |
 |  taskDetails   | tid: int  |   False    |            TaskDetails            |
 | allTaskDetails |           |   False    | [ TaskDetails, TaskDetails, ... ] |
 

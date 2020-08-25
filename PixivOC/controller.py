@@ -304,8 +304,6 @@ class Server:
         return self._TaskManager.stop(tid), ""
 
     def delete_task(self, tid: int) -> (bool, str):
-        if not TOKEN_MANAGER.has_refresh_token:
-            return False, 'Please login.'
         return self._TaskManager.delete(tid), ""
 
     def task_detail(self, tid: int) -> list:
