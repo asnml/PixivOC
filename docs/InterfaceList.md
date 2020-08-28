@@ -13,6 +13,20 @@
 
 ***
 
+**permission**
+
+|     Path      |   Parameter   | Method | Need login | Return |
+| :-----------: | :-----------: | :----: | :--------: | :----: |
+|     login     | password: str |  Post  |   False    |  bool  |
+| hasPermission |               |  Get   |   False    |  bool  |
+
+返回值说明：
+
+- login：布尔值表示设置控制台权限是否成功。
+- hasPermission：布尔值表示是否拥有控制台权限。
+
+***
+
 **sys**
 
 | Path | Parameter | Method | Need login | Return |

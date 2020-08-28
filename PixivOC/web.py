@@ -1,11 +1,36 @@
+import json
+from os import listdir
 from typing import Any
-from flask import Flask, request
-from controller import Check, Server, ServerPort
+from datetime import timedelta
+from flask import Flask, request, session
+from controller import Check, Server
+
+OptionsFileName = "Options.json"
+
+ServerPort = 13575
+SecretKey = "Any string, the more complex the better"
+ConsolePassword = "Hello world"
+
+if OptionsFileName not in listdir('.'):
+    with open(OptionsFileName, 'w', encoding='utf-8') as file:
+        json.dump({
+            'ServerPort': ServerPort,
+            'SecretKey': SecretKey,
+            'ConsolePassword': ConsolePassword
+        }, file)
+else:
+    with open(OptionsFileName, encoding='utf-8') as file:
+        data = json.load(file)
+        ServerPort = data['ServerPort']
+        SecretKey = data['SecretKey']
+        ConsolePassword = data['ConsolePassword']
 
 
 Check.assert_task_cls_meet_specifications()
 server = Server()
 app = Flask(__name__)
+app.config['SECRET_KEY'] = SecretKey
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
 
 def start() -> None:
@@ -47,6 +72,40 @@ def wrap_return_value(b: bool, result: Any) -> dict:
         "status": b,
         "result": result
     }
+
+
+@app.before_request
+def permission_check():
+    if request.endpoint == 'set_permission' or request.endpoint == 'has_permission'\
+            or request.endpoint == 'static':
+        pass
+    else:
+        if session.get('login') is None:
+            return wrap_return_value(False, "You don't have permission to access the link.")
+
+
+'''
+permission
+'''
+
+
+@app.route('/permission/login', methods=["POST"])
+def set_permission() -> dict:
+    b, args_list = extract_args([
+        ['password', str]
+    ])
+    if b is False:
+        return wrap_return_value(False, None)
+    if ConsolePassword != args_list[0]:
+        return wrap_return_value(True, False)
+    session.permanent = True
+    session['login'] = True
+    return wrap_return_value(True, True)
+
+
+@app.route('/permission/hasPermission')
+def has_permission() -> dict:
+    return wrap_return_value(True, False if session.get('login') is None else True)
 
 
 '''

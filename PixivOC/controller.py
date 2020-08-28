@@ -10,11 +10,7 @@ from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
 from taskTypes import BaseTask, TaskTypeList, SingleWork, UserWorks
 
 
-ServerPort = 13575
-
 DATA_FILE_NAME = 'Data.json'
-SLEEP_TIME = 0.1
-
 SaveLock = Lock()
 AutoSaveTime = 300  # unit: second
 
