@@ -15,9 +15,9 @@
 
 **sys**
 
-| Path | Parameter | Need login | Return |
-| :--: | :-------: | :--------: | :----: |
-| exit |           |   False    |  True  |
+| Path | Parameter | Method | Need login | Return |
+| :--: | :-------: | :----: | :--------: | :----: |
+| exit |           |  Post  |   False    |  True  |
 
 返回值说明
 
@@ -27,13 +27,13 @@
 
 **user**
 
-|     Path     |            Parameter            | Need login | Return |
-| :----------: | :-----------------------------: | :--------: | :----: |
-|    login     | account: str<br />password: str |   False    |  True  |
-|    logout    |                                 |   False    |  True  |
-| refreshToken |                                 |   False    |  bool  |
-|   isLogin    |                                 |   False    |  bool  |
-|   tokenMsg   |                                 |   False    |  str   |
+|     Path     |            Parameter            | Method | Need login | Return |
+| :----------: | :-----------------------------: | :----: | :--------: | :----: |
+|    login     | account: str<br />password: str |  Post  |   False    |  True  |
+|    logout    |                                 |  Post  |   False    |  True  |
+| refreshToken |                                 |  Post  |   False    |  bool  |
+|   isLogin    |                                 |  Get   |   False    |  bool  |
+|   tokenMsg   |                                 |  Get   |   False    |  str   |
 
 返回值说明
 
@@ -47,14 +47,14 @@
 
 **environment**
 
-|         Path         |          Parameter          | Need login |           Return            |
-| :------------------: | :-------------------------: | :--------: | :-------------------------: |
-|     setProxyMode     | mode: int<br />address: str |   False    |            bool             |
-|      setTimeout      |        timeout: int         |   False    |            bool             |
-| setConcurrencyNumber |         number: int         |   False    |            bool             |
-|   setIntervalTime    |         second: int         |   False    |            bool             |
-|     setIncrement     |       increment: bool       |   False    |            bool             |
-|    getEnvironment    |                             |   False    | [ str, str, int, int, int ] |
+|         Path         |          Parameter          | Method | Need login |           Return            |
+| :------------------: | :-------------------------: | :----: | :--------: | :-------------------------: |
+|     setProxyMode     | mode: int<br />address: str |  Post  |   False    |            bool             |
+|      setTimeout      |        timeout: int         |  Post  |   False    |            bool             |
+| setConcurrencyNumber |         number: int         |  Post  |   False    |            bool             |
+|   setIntervalTime    |         second: int         |  Post  |   False    |            bool             |
+|     setIncrement     |       increment: bool       |  Post  |   False    |            bool             |
+|    getEnvironment    |                             |  Get   |   False    | [ str, str, int, int, int ] |
 
 `setProxyMode` 可选值及其运行模式：
 
@@ -82,13 +82,13 @@
 
 **operation**
 
-|      Path      | Parameter | Need login |              Return               |
-| :------------: | :-------: | :--------: | :-------------------------------: |
-|   startTask    | tid: int  |    True    |           [ bool, str ]           |
-|    stopTask    | tid: int  |    True    |           [ bool, str ]           |
-|   deleteTask   | tid: int  |   False    |               bool                |
-|  taskDetails   | tid: int  |   False    |            TaskDetails            |
-| allTaskDetails |           |   False    | [ TaskDetails, TaskDetails, ... ] |
+|      Path      | Parameter | Method | Need login |              Return               |
+| :------------: | :-------: | :----: | :--------: | :-------------------------------: |
+|   startTask    | tid: int  |  Post  |    True    |           [ bool, str ]           |
+|    stopTask    | tid: int  |  Post  |    True    |           [ bool, str ]           |
+|   deleteTask   | tid: int  |  Post  |   False    |               bool                |
+|  taskDetails   | tid: int  |  Get   |   False    |            TaskDetails            |
+| allTaskDetails |           |  Get   |   False    | [ TaskDetails, TaskDetails, ... ] |
 
 返回值说明：
 
@@ -117,10 +117,10 @@ TaskDetils = [
 
 **create**
 
-|    Path    |                     Parameter                      | Need login |                    Return                    |
-| :--------: | :------------------------------------------------: | :--------: | :------------------------------------------: |
-| singleWork | keyWord: str<br />taskName: str<br />savePath: str |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
-| userWorks  | keyWord: str<br />taskName: str<br />savePath: str |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
+|    Path    |                     Parameter                      | Method | Need login |                    Return                    |
+| :--------: | :------------------------------------------------: | :----: | :--------: | :------------------------------------------: |
+| singleWork | keyWord: str<br />taskName: str<br />savePath: str |  Post  |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
+| userWorks  | keyWord: str<br />taskName: str<br />savePath: str |  Post  |   False    | [ False, [] ] or <br />[ True, TaskDetails ] |
 
 返回值说明：
 

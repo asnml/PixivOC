@@ -12,15 +12,30 @@ def start() -> None:
     app.run('127.0.0.1', ServerPort)
 
 
-def extract_args(word_list: list) -> (bool, list):
+def extract_args(word_list: list, method_is_post=True) -> (bool, list):
     args_list = []
     try:
-        for keyword, type_ in word_list:
-            args = request.args.get(keyword, type=type_)
-            if args is None:
-                return False, []
-            args_list.append(args)
-        return True, args_list
+        if method_is_post:
+            for keyword, type_ in word_list:
+                arg = request.form[keyword]
+                if type_ == int:
+                    arg = int(arg)
+                if type_ == bool:
+                    if arg == 'true' or arg == 'True':
+                        arg = True
+                    elif arg == 'false' or arg == 'False':
+                        arg = False
+                    else:
+                        raise ValueError
+                args_list.append(arg)
+            return True, args_list
+        else:
+            for keyword, type_ in word_list:
+                arg = request.args.get(keyword, type=type_)
+                if arg is None:
+                    return False, []
+                args_list.append(arg)
+            return True, args_list
     except KeyError:
         return False, []
     except ValueError:
@@ -39,7 +54,7 @@ sys
 '''
 
 
-@app.route('/sys/exit')
+@app.route('/sys/exit', methods=["POST"])
 def exit_() -> dict:
     pass
 
@@ -49,7 +64,7 @@ user
 '''
 
 
-@app.route('/user/login')
+@app.route('/user/login', methods=["POST"])
 def login() -> dict:
     b, args_list = extract_args([
         ['account', str],
@@ -60,12 +75,12 @@ def login() -> dict:
     return wrap_return_value(True, server.login(*args_list))
 
 
-@app.route('/user/refreshToken')
+@app.route('/user/refreshToken', methods=["POST"])
 def refresh_token() -> dict:
     return wrap_return_value(True, server.refresh_token())
 
 
-@app.route('/user/logout')
+@app.route('/user/logout', methods=["POST"])
 def logout() -> dict:
     pass
 
@@ -85,7 +100,7 @@ environment
 '''
 
 
-@app.route('/environment/setProxyMode')
+@app.route('/environment/setProxyMode', methods=["POST"])
 def set_proxy_mode() -> dict:
     b, args_list = extract_args([
         ['mode', int],
@@ -96,7 +111,7 @@ def set_proxy_mode() -> dict:
     return wrap_return_value(True, server.set_proxy_mode(*args_list))
 
 
-@app.route('/environment/setTimeout')
+@app.route('/environment/setTimeout', methods=["POST"])
 def set_timeout() -> dict:
     b, args_list = extract_args([
         ['timeout', int]
@@ -106,7 +121,7 @@ def set_timeout() -> dict:
     return wrap_return_value(True, server.set_timeout(*args_list))
 
 
-@app.route('/environment/setConcurrencyNumber')
+@app.route('/environment/setConcurrencyNumber', methods=["POST"])
 def set_concurrency_number() -> dict:
     b, args_list = extract_args([
         ['number', int]
@@ -116,7 +131,7 @@ def set_concurrency_number() -> dict:
     return wrap_return_value(True, server.set_concurrency_number(*args_list))
 
 
-@app.route('/environment/setIntervalTime')
+@app.route('/environment/setIntervalTime', methods=["POST"])
 def set_interval_time() -> dict:
     b, args_list = extract_args([
         ['second', int]
@@ -126,7 +141,7 @@ def set_interval_time() -> dict:
     return wrap_return_value(True, server.set_interval_time(*args_list))
 
 
-@app.route('/environment/setIncrement')
+@app.route('/environment/setIncrement', methods=["POST"])
 def set_increment() -> dict:
     b, args_list = extract_args([
         ['increment', bool]
@@ -146,7 +161,7 @@ operation
 '''
 
 
-@app.route('/operation/startTask')
+@app.route('/operation/startTask', methods=["POST"])
 def start_task() -> dict:
     b, args_list = extract_args([
         ['tid', int]
@@ -156,7 +171,7 @@ def start_task() -> dict:
     return wrap_return_value(True, server.start_task(*args_list))
 
 
-@app.route('/operation/stopTask')
+@app.route('/operation/stopTask', methods=["POST"])
 def stop_task() -> dict:
     b, args_list = extract_args([
         ['tid', int]
@@ -166,7 +181,7 @@ def stop_task() -> dict:
     return wrap_return_value(True, server.stop_task(*args_list))
 
 
-@app.route('/operation/deleteTask')
+@app.route('/operation/deleteTask', methods=["POST"])
 def delete_task() -> dict:
     b, args_list = extract_args([
         ['tid', int]
@@ -180,7 +195,7 @@ def delete_task() -> dict:
 def task_details() -> dict:
     b, args_list = extract_args([
         ['tid', int]
-    ])
+    ], False)
     if b is False:
         return wrap_return_value(False, None)
     return wrap_return_value(True, server.task_detail(*args_list))
@@ -196,7 +211,7 @@ create
 '''
 
 
-@app.route('/create/singleWork')
+@app.route('/create/singleWork', methods=["POST"])
 def single_work() -> dict:
     b, args_list = extract_args([
         ['keyWord', str],
@@ -208,7 +223,7 @@ def single_work() -> dict:
     return wrap_return_value(True, server.single_work(*args_list))
 
 
-@app.route('/create/userWorks')
+@app.route('/create/userWorks', methods=["POST"])
 def user_works() -> dict:
     b, args_list = extract_args([
         ['keyWord', str],
@@ -220,12 +235,12 @@ def user_works() -> dict:
     return wrap_return_value(True, server.user_works(*args_list))
 
 
-@app.route('/create/workDetails')
+@app.route('/create/workDetails', methods=["POST"])
 def work_details() -> dict:
     pass
 
 
-@app.route('/create/userWorksLink')
+@app.route('/create/userWorksLink', methods=["POST"])
 def user_works_link() -> dict:
     pass
 
