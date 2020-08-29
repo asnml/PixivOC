@@ -229,8 +229,8 @@ class Server:
     sys
     '''
 
-    def exit(self) -> bool:
-        pass
+    def exit(self) -> None:
+        self._TaskManager.exit()
 
     '''
     user

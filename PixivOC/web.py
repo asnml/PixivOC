@@ -1,6 +1,8 @@
 import json
-from os import listdir
+from os import listdir, _exit
 from typing import Any
+from time import sleep
+from threading import Thread
 from datetime import timedelta
 from flask import Flask, request, session
 from controller import Check, Server, core_logger
@@ -10,6 +12,8 @@ OptionsFileName = "Options.json"
 ServerPort = 13575
 SecretKey = "Any string, the more complex the better"
 ConsolePassword = "Hello world"
+
+AcceptRequest = True
 
 
 def load_web_setting():
@@ -92,6 +96,9 @@ def permission_check():
     else:
         if session.get('login') is None:
             return wrap_return_value(False, "You don't have permission to access the link.")
+        else:
+            if AcceptRequest is False:
+                return wrap_return_value(False, "Server has closed.")
 
 
 '''
@@ -123,9 +130,20 @@ sys
 '''
 
 
+def real_exit_func():
+    sleep(5)  # make sure return response
+    server.exit()
+    core_logger.info("Close software.")
+    _exit(0)
+
+
 @app.route('/sys/exit', methods=["POST"])
 def exit_() -> dict:
-    pass
+    global AcceptRequest
+    AcceptRequest = False
+    child_thread = Thread(target=real_exit_func)
+    child_thread.start()
+    return wrap_return_value(True, True)
 
 
 '''
