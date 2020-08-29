@@ -42,7 +42,7 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
 
 def start() -> None:
-    app.run('127.0.0.1', ServerPort)
+    app.run('0.0.0.0', ServerPort)
 
 
 def extract_args(word_list: list, method_is_post=True) -> (bool, list):
