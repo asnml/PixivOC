@@ -3,7 +3,7 @@ from os import listdir
 from typing import Any
 from datetime import timedelta
 from flask import Flask, request, session
-from controller import Check, Server
+from controller import Check, Server, core_logger
 
 OptionsFileName = "Options.json"
 
@@ -11,23 +11,27 @@ ServerPort = 13575
 SecretKey = "Any string, the more complex the better"
 ConsolePassword = "Hello world"
 
-if OptionsFileName not in listdir('.'):
-    with open(OptionsFileName, 'w', encoding='utf-8') as file:
-        json.dump({
-            'ServerPort': ServerPort,
-            'SecretKey': SecretKey,
-            'ConsolePassword': ConsolePassword
-        }, file)
-else:
-    with open(OptionsFileName, encoding='utf-8') as file:
-        data = json.load(file)
-        ServerPort = data['ServerPort']
-        SecretKey = data['SecretKey']
-        ConsolePassword = data['ConsolePassword']
+
+def load_web_setting():
+    global ServerPort, SecretKey, ConsolePassword
+    if OptionsFileName not in listdir('.'):
+        with open(OptionsFileName, 'w', encoding='utf-8') as file:
+            json.dump({
+                'ServerPort': ServerPort,
+                'SecretKey': SecretKey,
+                'ConsolePassword': ConsolePassword
+            }, file)
+    else:
+        with open(OptionsFileName, encoding='utf-8') as file:
+            data = json.load(file)
+            ServerPort = data['ServerPort']
+            SecretKey = data['SecretKey']
+            ConsolePassword = data['ConsolePassword']
 
 
 Check.assert_task_cls_meet_specifications()
 server = Server()
+load_web_setting()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SecretKey
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
@@ -72,6 +76,12 @@ def wrap_return_value(b: bool, result: Any) -> dict:
         "status": b,
         "result": result
     }
+
+
+@app.errorhandler(Exception)
+def catch_unknown_exception(error):
+    core_logger.exception(error)
+    return wrap_return_value(False, "An unknown exception occurred on the server.")
 
 
 @app.before_request
