@@ -4,7 +4,7 @@ from typing import Any
 from time import sleep
 from threading import Thread
 from datetime import timedelta
-from flask import Flask, request, session
+from flask import Flask, request, session, redirect
 from controller import Check, Server, core_logger
 
 OptionsFileName = "Options.json"
@@ -36,7 +36,7 @@ def load_web_setting():
 Check.assert_task_cls_meet_specifications()
 server = Server()
 load_web_setting()
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.config['SECRET_KEY'] = SecretKey
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
@@ -123,6 +123,21 @@ def set_permission() -> dict:
 @app.route('/permission/hasPermission')
 def has_permission() -> dict:
     return wrap_return_value(True, False if session.get('login') is None else True)
+
+
+'''
+site
+'''
+
+
+@app.route('/')
+def font_page():
+    return "Hello :)"
+
+
+@app.route('/favicon.ico')
+def fav():
+    return redirect('/static/favicon.ico')
 
 
 '''

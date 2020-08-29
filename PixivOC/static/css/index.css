@@ -1,0 +1,116 @@
+body {
+    background-color: rgb(120, 123, 127);
+}
+
+
+/* nav */
+
+.nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 4em;
+    background-color: rgb(52, 58, 64);
+    padding-left: 2em;
+    padding-right: 1em;
+}
+
+.nav-button-group {
+    display: flex;
+    flex-direction: row;
+}
+
+.nav-button-group div {
+    margin-right: 1em;
+}
+
+.vertical-line {
+    width: 2px;
+    background-color: white;
+}
+
+.nav-description {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.nav-description span {
+    color: white;
+}
+
+.nav-right-box {
+    display: flex;
+    margin-right: 2em;
+}
+
+.nav-right-box p {
+    color: white;
+}
+
+
+/* table and btn groups */
+
+.box {
+    display: flex;
+    flex-direction: row;
+    margin-top: 3em;
+}
+
+.space-box {
+    width: 2%;
+}
+
+.content-box {
+    width: 96%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.table-box {
+    width: 75%;
+}
+
+.table td {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.operation-box {
+    width: 15%;
+    display: flex;
+    flex-direction: column;
+}
+
+.operation-box p {
+    color: white;
+}
+
+.operation-box hr {
+    color: white;
+}
+
+
+/* toast */
+
+#polite {
+    position: absolute;
+    top: 4em;
+    right: 0;
+    /* this area will cover button
+    min-width: 0px;
+    min-height: 0px; */
+}
+
+.toast-body {
+    display: flex;
+    flex-direction: row;
+}
+
+.toast-body div {
+    text-align: center;
+}
