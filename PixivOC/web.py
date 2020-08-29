@@ -82,6 +82,12 @@ def wrap_return_value(b: bool, result: Any) -> dict:
     }
 
 
+@app.errorhandler(404)
+def catch_404(error):
+    print(error)  # Just to eliminate code reminders
+    return "Page not found"
+
+
 @app.errorhandler(Exception)
 def catch_unknown_exception(error):
     core_logger.exception(error)
