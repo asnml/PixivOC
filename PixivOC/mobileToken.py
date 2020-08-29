@@ -18,6 +18,9 @@ class OperationFailedException(Exception):
         super().__init__(msg)
 
 
+AccessTokenUpdateExpiration = 60 * 60 * 24 * 30  # unit: second
+
+
 class TokenManager:
     instance = None
     init = True
@@ -63,6 +66,13 @@ class TokenManager:
                 self._RefreshToken = data['RefreshToken']
                 self._AccessTokenUpdateTime = data['AccessTokenUpdateTime']
             core_logger.info('Find token file, loading.')
+            now_timestamp = int(datetime.now().timestamp())
+            if now_timestamp - self._AccessTokenUpdateTime >= AccessTokenUpdateExpiration:
+                self._AccessToken = None
+                self._RefreshToken = None
+                self._AccessTokenUpdateTime = 0
+            core_logger.info('According to the last update date '
+                             'more than 30 days, the data is cleared')
         else:
             core_logger.info('Not find token file.')
 
