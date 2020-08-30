@@ -249,7 +249,7 @@ function create_task() {
         if (status == true && resp == true) {
             send_alert("successfully create task", "success")
         } else {
-            send_alert("faied to create task\nplease check save path and parameters or maybe server cannot accept the request", "warning")
+            send_alert("failed to create task\nplease check save path and parameters or maybe server cannot accept the request", "warning")
         }
         update_all_task_detail()
     })
@@ -265,7 +265,7 @@ function btn_start() {
         if (status == true && resp == true) {
             send_alert("successfully start task", "success")
         } else {
-            send_alert("faied to start task, please check islogin", "warning")
+            send_alert("failed to start task, please check has login", "warning")
         }
         update_all_task_detail()
     })
@@ -281,7 +281,7 @@ function btn_stop() {
         if (status == true && resp == true) {
             send_alert("successfully stop task", "success")
         } else {
-            send_alert("faied to stop task, please check islogin", "warning")
+            send_alert("failed to stop task, please check has login", "warning")
         }
         update_all_task_detail()
     })
@@ -399,7 +399,7 @@ function update_all_task_detail() {
 
 
 function update_login_status() {
-    var url = "/user/isLogin"
+    var url = "/user/hasLogin"
     $.get(url, function(result) {
         login_status = result['result']
         $("#login_status").text("Login status: " + login_status)

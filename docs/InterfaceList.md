@@ -46,7 +46,7 @@
 |    login     | account: str<br />password: str |  Post  |   False    |  True  |
 |    logout    |                                 |  Post  |   False    |  True  |
 | refreshToken |                                 |  Post  |   False    |  bool  |
-|   isLogin    |                                 |  Get   |   False    |  bool  |
+|   hasLogin   |                                 |  Get   |   False    |  bool  |
 |   tokenMsg   |                                 |  Get   |   False    |  str   |
 
 返回值说明

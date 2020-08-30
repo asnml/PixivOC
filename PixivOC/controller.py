@@ -250,7 +250,7 @@ class Server:
         pass
 
     @staticmethod
-    def is_login() -> bool:
+    def has_login() -> bool:
         return TOKEN_MANAGER.has_refresh_token
 
     @staticmethod

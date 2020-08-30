@@ -193,9 +193,9 @@ def logout() -> dict:
     pass
 
 
-@app.route('/user/isLogin')
+@app.route('/user/hasLogin')
 def is_login() -> dict:
-    return wrap_return_value(True, server.is_login())
+    return wrap_return_value(True, server.has_login())
 
 
 @app.route('/user/tokenMsg')
