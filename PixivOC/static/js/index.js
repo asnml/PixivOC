@@ -144,6 +144,7 @@ function set_permission() {
         var resp = response['result']
         if (status == true && resp == true) {
             $("#consoleModal").modal('hide')
+            set_interval()
         } else {
             alert("Password error")
         }
