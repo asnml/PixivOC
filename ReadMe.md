@@ -25,4 +25,4 @@
 
 ## 使用说明
 
-[链接](./docs/使用说明)
+[链接](https://github.com/asnml/PixivOC/blob/master/docs/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)
