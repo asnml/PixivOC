@@ -211,6 +211,7 @@ class BaseTask:
                 self._Over = True
                 self._StageName = 'Over'
                 self._ParamsList = []
+                self._remain = 0
                 return
             self._StageName = 'Not set'
             self._start_stage()
