@@ -97,7 +97,7 @@ def catch_unknown_exception(error):
 @app.before_request
 def permission_check():
     if request.endpoint == 'set_permission' or request.endpoint == 'has_permission'\
-            or request.endpoint == 'static':
+            or request.endpoint == 'static' or request.endpoint == 'font_page':
         pass
     else:
         if session.get('login') is None:
