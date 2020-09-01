@@ -315,8 +315,8 @@ class TokenTask(BaseTask):
     def _start(self) -> None:
         self._Lock.acquire()
         self._stopped = False
-        super()._start()
         self._Lock.release()
+        super()._start()
 
     def _stop(self) -> None:
         self._Lock.acquire()
