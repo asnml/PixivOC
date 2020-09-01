@@ -161,7 +161,7 @@ class TaskManager:
         type_id = cls.TypeID
         timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
         storage_unit = StorageUnit(
-            timestamp, task_name, type_id, False, 1, [keyword], [], save_path, 1
+            timestamp, task_name, type_id, False, 0, [keyword], [], save_path, 1
         )
         task = cls(storage_unit)  # type: BaseTask
         self.TaskMapping[timestamp] = task

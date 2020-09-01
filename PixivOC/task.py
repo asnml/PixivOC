@@ -81,23 +81,26 @@ class BaseTask:
         self._Data = storage.Data
         self._SavePath = storage.SavePath
         self._Total = storage.Total
+        self._remain = len(self._ParamsList)
 
         self._TimeoutIncrement = self.Increment
 
-        self._StageName = "NotSet"
         self._DownloadThread = None
+
         self._State = TaskState.WaitStart
-        self._remain = len(self._ParamsList)
+        if self._CurrentStage == 0:
+            self._StageName = "Init"
+        elif self._Over:
+            self._StageName = "Over"
+            self._State = TaskState.Over
+        else:
+            self._StageName = self._get_stage_name()
 
         abs_path = path.abspath(self._SavePath)
         if path.exists(abs_path):
             self._AbsSavePath = path.join(abs_path, self._TaskName)
             if self._TaskName not in listdir(abs_path):
                 mkdir(self._AbsSavePath)
-
-            if self._Over:
-                self._StageName = "Over"
-                self._State = TaskState.Over
         else:
             self._Over = True
             self._StageName = "Error"
@@ -131,13 +134,13 @@ class BaseTask:
 
     def start(self) -> None:
         if self._State == TaskState.WaitStart:
-            return self._start_stage()
+            return self._start()
         elif self._State == TaskState.WaitToken:
             pass
         elif self._State == TaskState.Downloading:
             pass
         elif self._State == TaskState.Stopped:
-            return self._start_stage()
+            return self._start()
         elif self._State == TaskState.Over:
             pass
         elif self._State == TaskState.Error:
@@ -145,7 +148,11 @@ class BaseTask:
 
     def _start(self) -> None:
         core_logger.info(f'Call task {self._TaskName} start function.')
+        if self._CurrentStage == 0:
+            self._CurrentStage += 1
+            self._StageName = self._get_stage_name()
         self._start_stage()
+        self._State = TaskState.Downloading
 
     def stop(self) -> None:
         if self._State == TaskState.WaitStart:
@@ -163,7 +170,9 @@ class BaseTask:
 
     def _stop(self) -> None:
         core_logger.info(f'Call task {self._TaskName} stop function.')
-        self._DownloadThread.close()
+        if self._DownloadThread is not None:
+            if self._DownloadThread.is_alive():
+                self._DownloadThread.close()
         self._State = TaskState.Stopped
 
     def safe_stop(self):
@@ -182,7 +191,9 @@ class BaseTask:
 
     def _safe_stop(self):
         core_logger.info(f'Call task {self._TaskName} safe stop function.')
-        self._DownloadThread.make_sure_close()
+        if self._DownloadThread is not None:
+            if self._DownloadThread.is_alive():
+                self._DownloadThread.make_sure_close()
         self._State = TaskState.Stopped
 
     def _downloader_loop_over(self, future: Future):
@@ -218,7 +229,7 @@ class BaseTask:
                 self._ParamsList = []
                 self._remain = 0
                 return
-            self._StageName = 'Not set'
+            self._StageName = self._get_stage_name()
             self._start_stage()
         elif status_code == ExitState.Cancel:
             pass
@@ -238,7 +249,6 @@ class BaseTask:
             pass
 
     def picture_parser(self, result_package: ResultPackage):
-        self._StageName = 'DownloadPicture'
         with open(path.join(self._AbsSavePath, result_package.msg[0]), 'wb') as file:
             file.write(result_package.result)
         return ParseResult(result_package.msg[1], result_package.msg[0])
@@ -246,6 +256,9 @@ class BaseTask:
     # ******************************************
     # you should override the following function
     # ******************************************
+
+    def _get_stage_name(self) -> str:
+        raise Exception('Please override this function.')
 
     def _set_stage(self) -> int:
         raise Exception('Please override this function.')
@@ -302,23 +315,17 @@ class TokenTask(BaseTask):
     def _start(self) -> None:
         self._Lock.acquire()
         self._stopped = False
-        self._start_stage()
+        super()._start()
         self._Lock.release()
 
     def _stop(self) -> None:
         self._Lock.acquire()
         self._stopped = True
-        if self._DownloadThread is not None:
-            if self._DownloadThread.is_alive():
-                self._DownloadThread.close()
-        self.State = TaskState.Stopped
+        super()._stop()
         self._Lock.release()
 
     def _safe_stop(self) -> None:
         self._Lock.acquire()
         self._stopped = True
-        if self._DownloadThread is not None:
-            if self._DownloadThread.is_alive():
-                self._DownloadThread.make_sure_close()
-        self._State = TaskState.Stopped
+        super()._safe_stop()
         self._Lock.release()

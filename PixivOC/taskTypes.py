@@ -7,6 +7,12 @@ class SingleWork(TokenTask):
     TypeID = 1
     TypeName = 'SingleWork'
 
+    def _get_stage_name(self) -> str:
+        if self._CurrentStage == 1:
+            return 'GetWorkDetails'
+        if self._CurrentStage == 2:
+            return 'DownloadPictures'
+
     def _set_stage(self) -> int:
         return 2 if self._CurrentStage == 1 else -1
 
@@ -24,7 +30,6 @@ class SingleWork(TokenTask):
 
     @token_stage_wrapper
     def _stage_1(self, token: str) -> RequestPackageList:
-        self._StageName = 'GetWorkDetails'
         work_id = int(self._ParamsList[0])
         request_package = SingleWorkAPI.get_package(work_id, token)
         return [request_package]
@@ -39,13 +44,20 @@ class SingleWork(TokenTask):
 
     @stage_wrapper
     def _stage_2(self) -> RequestPackageList:
-        self._StageName = 'DownloadPictures'
         return [SingleWorkAPI.get_picture_request_package(url) for url in self._ParamsList]
 
 
 class UserWorks(TokenTask):
     TypeID = 2
     TypeName = 'UserWorks'
+
+    def _get_stage_name(self) -> str:
+        if self._CurrentStage == 1:
+            return 'GetWorksNumber'
+        if self._CurrentStage == 2:
+            return 'GetPageUrls'
+        if self._CurrentStage == 3:
+            return 'DownloadPictures'
 
     def _set_stage(self) -> int:
         if self._CurrentStage == 1:
@@ -76,7 +88,6 @@ class UserWorks(TokenTask):
 
     @token_stage_wrapper
     def _stage_1(self, token: str):
-        self._StageName = 'GetWorksNumber'
         author_id = self._ParamsList[0]
         req_package = UserWorksAPI.get_package(author_id, token)
         return [req_package]
@@ -95,7 +106,6 @@ class UserWorks(TokenTask):
 
     @token_stage_wrapper
     def _stage_2(self, token: str) -> RequestPackageList:
-        self._StageName = 'GetPageUrls'
         return [UserWorksAPI.get_package(author_id, token, page) for author_id, page in self._ParamsList]
 
     def _stage_2_token(self):
@@ -108,7 +118,6 @@ class UserWorks(TokenTask):
 
     @stage_wrapper
     def _stage_3(self):
-        self._StageName = 'DownloadPictures'
         return [UserWorksAPI.get_picture_request_package(url) for url in self._ParamsList]
 
 
