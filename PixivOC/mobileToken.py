@@ -71,8 +71,8 @@ class TokenManager:
                 self._AccessToken = None
                 self._RefreshToken = None
                 self._AccessTokenUpdateTime = 0
-            core_logger.info('According to the last update date '
-                             'more than 30 days, the data is cleared')
+                core_logger.info('According to the last update date '
+                                'more than 30 days, the data is cleared')
         else:
             core_logger.info('Not find token file.')
 
