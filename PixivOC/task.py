@@ -30,7 +30,7 @@ class TaskState:
 
 class StorageUnit:
     def __init__(self, tid: int, task_name: str, type_id: int, over: bool,
-                 current_stage: int, params_list: list, data: list, save_path: str):
+                 current_stage: int, params_list: list, data: list, save_path: str, total: int):
         self.TID = tid
         self.TaskName = task_name
         self.TypeID = type_id
@@ -41,6 +41,7 @@ class StorageUnit:
         self.ParamsList = params_list
         self.Data = data
         self.SavePath = save_path
+        self.Total = total
 
     def json(self):
         return [
@@ -51,7 +52,8 @@ class StorageUnit:
             self.CurrentStage,
             self.ParamsList,
             self.Data,
-            self.SavePath
+            self.SavePath,
+            self.Total
         ]
 
 
@@ -78,6 +80,7 @@ class BaseTask:
         self._ParamsList = storage.ParamsList
         self._Data = storage.Data
         self._SavePath = storage.SavePath
+        self._Total = storage.Total
 
         self._TimeoutIncrement = self.Increment
 
@@ -104,13 +107,13 @@ class BaseTask:
 
     @property
     def progress(self):
-        return self._StageName, self._State, self._remain
+        return self._StageName, self._State, self._remain, self._Total
 
     @property
     def msg(self):
         return self._Over, self._TID, \
                self._TaskName, self.TypeName, self._SavePath,\
-               self._StageName, self._State, self._remain
+               self._StageName, self._State, self._remain, self._Total
 
     def export_storage(self) -> StorageUnit:
         core_logger.debug(f'Export task {self._TaskName}.')
@@ -122,7 +125,8 @@ class BaseTask:
             self._CurrentStage,
             self._ParamsList,
             self._Data,
-            self._SavePath
+            self._SavePath,
+            self._Total
         )
 
     def start(self) -> None:
@@ -206,6 +210,7 @@ class BaseTask:
             self._ParamsList = self._Data
             self._Data = []
             self._remain = len(self._ParamsList)
+            self._Total = self._remain
             self._CurrentStage = self._set_stage()
             if self._CurrentStage == -1:
                 self._Over = True

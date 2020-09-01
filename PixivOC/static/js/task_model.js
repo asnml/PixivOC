@@ -1,6 +1,6 @@
 var _task_dict = {}
 
-function createTask(over, tid, task_name, type_name, save_path, stage_name, state, less) {
+function createTask(over, tid, task_name, type_name, save_path, stage_name, state, less, total) {
     var task = new Object
     task.Over = over // bool
     task.Tid = tid // int
@@ -10,10 +10,11 @@ function createTask(over, tid, task_name, type_name, save_path, stage_name, stat
     task.StageName = stage_name // str
     task.State = state // str
     task.Less = less // int
+    task.Total = total  // int
     return task
 }
 
-function update_task_msg(task, over, tid, task_name, type_name, save_path, stage_name, state, less) {
+function update_task_msg(task, over, tid, task_name, type_name, save_path, stage_name, state, less, total) {
     task.Over = over // bool
     task.Tid = tid // int
     task.TaskName = task_name // str
@@ -22,6 +23,7 @@ function update_task_msg(task, over, tid, task_name, type_name, save_path, stage
     task.StageName = stage_name // str
     task.State = state // str
     task.Less = less // int
+    task.Total = total
 }
 
 function task_msg(task) {
@@ -32,7 +34,7 @@ function task_msg(task) {
     string_list.push(task.SavePath)
     string_list.push(task.StageName)
     string_list.push(task.State)
-    string_list.push(task.Less)
+    string_list.push(task.Less + "/" + task.Total)
     return string_list
 }
 

@@ -85,6 +85,7 @@ $('#detailModal').on('show.bs.modal', function(event) {
         modal.find('#detail_msg4').text("StageName: " + msg[4])
         modal.find('#detail_msg5').text("State: " + msg[5])
         modal.find('#detail_msg6').text("Less: " + msg[6])
+        modal.find('#detail_msg7').text("Total: " + msg[7])
     }
 })
 
@@ -384,13 +385,13 @@ function update_all_task_detail() {
             if (task == null) {
                 add_task(createTask(
                     task_msg[0], task_msg[1], task_msg[2], task_msg[3],
-                    task_msg[4], task_msg[5], task_msg[6], task_msg[7]
+                    task_msg[4], task_msg[5], task_msg[6], task_msg[7], task_msg[8]
                 ))
             } else {
                 update_task_msg(
                     task,
                     task_msg[0], task_msg[1], task_msg[2], task_msg[3],
-                    task_msg[4], task_msg[5], task_msg[6], task_msg[7]
+                    task_msg[4], task_msg[5], task_msg[6], task_msg[7], task_msg[8]
                 )
             }
         }
