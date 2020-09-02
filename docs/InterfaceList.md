@@ -123,7 +123,8 @@ TaskDetils = [
     SavePath: str,
     StageName: str,
     Stage: str,
-    Less: int
+    Remain: int
+    Total: int
 ]
 ```
 
