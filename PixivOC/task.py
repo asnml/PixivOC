@@ -57,15 +57,6 @@ class StorageUnit:
         ]
 
 
-def stage_wrapper(fn):
-    def wrapper(self, *args, **kwargs):
-        request_package_list = fn(self, *args, **kwargs)
-        self._DownloadThread = DownloadThread(self._parse_center)
-        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
-        self._State = TaskState.Downloading
-    return wrapper
-
-
 class BaseTask:
     TypeID = 0
     TypeName = 'BaseTask'
@@ -270,23 +261,6 @@ class BaseTask:
         raise Exception('Please override this function.')
 
 
-def token_stage_wrapper(fn):
-    def wrapper(self, *args, **kwargs):
-        self._Lock.acquire()
-        if self._stopped:
-            return
-        request_package_list = fn(self, *args, **kwargs)
-        self._DownloadThread = DownloadThread(self._parse_center, sync=True)
-        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
-        self._State = TaskState.Downloading
-        self._Lock.release()
-        # When you request pixiv api interface,
-        # you must be use sync downloader.
-        # Use async downloader will raise ConnectionResetError exception.
-        # I don't know how to fixed it.
-    return wrapper
-
-
 class TokenTask(BaseTask):
     def __init__(self, storage: StorageUnit):
         super().__init__(storage)
@@ -329,3 +303,29 @@ class TokenTask(BaseTask):
         self._stopped = True
         super()._safe_stop()
         self._Lock.release()
+
+
+def async_downloader(fn):
+    def wrapper(self, *args, **kwargs):
+        request_package_list = fn(self, *args, **kwargs)
+        self._DownloadThread = DownloadThread(self._parse_center)
+        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
+        self._State = TaskState.Downloading
+    return wrapper
+
+
+def token_stage_wrapper(fn):
+    def wrapper(self, *args, **kwargs):
+        self._Lock.acquire()
+        if self._stopped:
+            return
+        request_package_list = fn(self, *args, **kwargs)
+        self._DownloadThread = DownloadThread(self._parse_center, sync=True)
+        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
+        self._State = TaskState.Downloading
+        self._Lock.release()
+        # When you request pixiv api interface,
+        # you must be use sync downloader.
+        # Use async downloader will raise ConnectionResetError exception.
+        # I don't know how to fixed it.
+    return wrapper

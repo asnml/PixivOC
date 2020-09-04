@@ -42,7 +42,7 @@ class SingleWork(TokenTask):
         result = SingleWorkAPI.parse_picture(result_package.result)
         return ParseResult(result_package.msg, result)
 
-    @stage_wrapper
+    @async_downloader
     def _stage_2(self) -> RequestPackageList:
         return [SingleWorkAPI.get_picture_request_package(url) for url in self._ParamsList]
 
@@ -116,7 +116,7 @@ class UserWorks(TokenTask):
         picture_url = UserWorksAPI.parse_picture(result_package.result)
         return ParseResult(result_package.msg, picture_url)
 
-    @stage_wrapper
+    @async_downloader
     def _stage_3(self):
         return [UserWorksAPI.get_picture_request_package(url) for url in self._ParamsList]
 
