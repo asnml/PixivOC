@@ -18,7 +18,7 @@ class SingleWork(TokenTask):
 
     def _start_stage(self):
         if self._CurrentStage == 1:
-            return self._stage_1_token()
+            return self._stage_1()
         if self._CurrentStage == 2:
             return self._stage_2()
 
@@ -28,14 +28,11 @@ class SingleWork(TokenTask):
         if self._CurrentStage == 2:
             return self.picture_parser(result_package)
 
-    @token_stage_wrapper
+    @sync_token_downloader
     def _stage_1(self, token: str) -> RequestPackageList:
         work_id = int(self._ParamsList[0])
         request_package = SingleWorkAPI.get_package(work_id, token)
         return [request_package]
-
-    def _stage_1_token(self):
-        return self._get_token(self._stage_1)
 
     @staticmethod
     def _stage_1_parser(result_package: ResultPackage) -> ParseResult:
@@ -72,9 +69,9 @@ class UserWorks(TokenTask):
 
     def _start_stage(self):
         if self._CurrentStage == 1:
-            return self._stage_1_token()
+            return self._stage_1()
         if self._CurrentStage == 2:
-            return self._stage_2_token()
+            return self._stage_2()
         if self._CurrentStage == 3:
             return self._stage_3()
 
@@ -86,14 +83,11 @@ class UserWorks(TokenTask):
         if self._CurrentStage == 3:
             return self.picture_parser(result_package)
 
-    @token_stage_wrapper
-    def _stage_1(self, token: str):
+    @sync_token_downloader
+    def _stage_1(self, token: str) -> RequestPackageList:
         author_id = self._ParamsList[0]
         req_package = UserWorksAPI.get_package(author_id, token)
         return [req_package]
-
-    def _stage_1_token(self):
-        return self._get_token(self._stage_1)
 
     @staticmethod
     def _stage_1_parser(result_package: ResultPackage) -> ParseResult:
@@ -104,12 +98,9 @@ class UserWorks(TokenTask):
         else:
             return ParseResult(author_id, [(author_id, i) for i in range(1, page_number+1)])
 
-    @token_stage_wrapper
+    @sync_token_downloader
     def _stage_2(self, token: str) -> RequestPackageList:
         return [UserWorksAPI.get_package(author_id, token, page) for author_id, page in self._ParamsList]
-
-    def _stage_2_token(self):
-        return self._get_token(self._stage_2)
 
     @staticmethod
     def _stage_2_parser(result_package: ResultPackage) -> ParseResult:
@@ -117,7 +108,7 @@ class UserWorks(TokenTask):
         return ParseResult(result_package.msg, picture_url)
 
     @async_downloader
-    def _stage_3(self):
+    def _stage_3(self) -> RequestPackageList:
         return [UserWorksAPI.get_picture_request_package(url) for url in self._ParamsList]
 
 

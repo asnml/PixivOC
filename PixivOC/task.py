@@ -271,17 +271,9 @@ class TokenTask(BaseTask):
         self._stopped = False
         self._Lock = Lock()
 
-    def _get_token(self, fn, *args, **kwargs):
-        token = TOKEN_MANAGER.get_token(self.get_token_callback)
-        if token == "":
-            self._wait_token_fn = fn
-            self._wait_token_fn_args = args
-            self._wait_token_fn_kwargs = kwargs
-        else:
-            fn(token, *args, **kwargs)
-
     def get_token_callback(self, token: str):
         self._wait_token_fn(
+            self,
             *(token, *self._wait_token_fn_args),
             **self._wait_token_fn_kwargs
         )
@@ -314,18 +306,29 @@ def async_downloader(fn):
     return wrapper
 
 
-def token_stage_wrapper(fn):
+def sync_token_downloader(fn):
     def wrapper(self, *args, **kwargs):
-        self._Lock.acquire()
-        if self._stopped:
-            return
-        request_package_list = fn(self, *args, **kwargs)
-        self._DownloadThread = DownloadThread(self._parse_center, sync=True)
-        self._DownloadThread.start(self._downloader_loop_over, request_package_list)
-        self._State = TaskState.Downloading
-        self._Lock.release()
-        # When you request pixiv api interface,
-        # you must be use sync downloader.
-        # Use async downloader will raise ConnectionResetError exception.
-        # I don't know how to fixed it.
+        # fn is a function that create request package list
+        # args and kwargs is parameters that need at create request package
+        def inner_wrapper(self, *args, **kwargs):
+            self._Lock.acquire()
+            if self._stopped:
+                return
+            request_package_list = fn(self, *args, **kwargs)
+            self._DownloadThread = DownloadThread(self._parse_center, sync=True)
+            self._DownloadThread.start(self._downloader_loop_over, request_package_list)
+            self._State = TaskState.Downloading
+            self._Lock.release()
+            # When you request pixiv api interface,
+            # you must be use sync downloader.
+            # Use async downloader will raise ConnectionResetError exception.
+            # I don't know how to fixed it.
+
+        token = TOKEN_MANAGER.get_token(self.get_token_callback)
+        if token == "":
+            self._wait_token_fn = inner_wrapper
+            self._wait_token_fn_args = args
+            self._wait_token_fn_kwargs = kwargs
+        else:
+            inner_wrapper(self, token, *args, **kwargs)
     return wrapper
