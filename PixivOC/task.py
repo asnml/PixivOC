@@ -279,8 +279,9 @@ class TokenTask(BaseTask):
         if token == "Internet connection exception":
             self._stopped = True
             self._State = TaskState.Stopped
-            return
+
         if self._stopped:
+            self._Lock.release()
             return
         request_package_list = self._wait_token_fn(
             self,
