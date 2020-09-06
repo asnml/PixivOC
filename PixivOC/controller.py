@@ -87,6 +87,7 @@ class TaskManager:
     def _load_tasks(self) -> None:
         if DATA_FILE_NAME not in listdir('.'):
             file = open(DATA_FILE_NAME, 'w')
+            file.write("[]")
             file.close()
         else:
             with open(DATA_FILE_NAME) as file:

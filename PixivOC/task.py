@@ -276,6 +276,10 @@ class TokenTask(BaseTask):
 
     def get_token_callback(self, token: str):
         self._Lock.acquire()
+        if token == "Internet connection exception":
+            self._stopped = True
+            self._State = TaskState.Stopped
+            return
         if self._stopped:
             return
         request_package_list = self._wait_token_fn(
