@@ -2,6 +2,8 @@
 
 &emsp;&emsp;`PixivOC` 是一个 `Pixiv` 爬虫应用。你可以将其部署在本地电脑上或者远程服务器上，然后使用网页来进行控制。
 
+[使用截图：](https://github.com/asnml/PixivOC/blob/master/Console.jpg)
+
 ![](./Console.jpg)
 
 
