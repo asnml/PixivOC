@@ -173,9 +173,6 @@ class TokenManager:
             # 该异常未被捕捉，异常级别应为 CRITICAL，应组织程序有序的退出
             core_logger.critical('Extract access_token error!', exc_info=True)
             raise KeyError
-        except Exception:
-            with open('resp.txt', 'w', encoding='utf-8') as file:
-                file.write(resp)
         return self._write_token()
 
     def _write_token(self):
