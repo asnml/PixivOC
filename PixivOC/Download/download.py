@@ -173,6 +173,8 @@ async def child_fetch(client: ClientSession, package: RequestPackage) -> ResultP
                     proxy=package.proxy
             ) as resp:
                 return ResultPackage(result=await resp.read(), msg=package.msg)
+    except asyncio.TimeoutError:
+        return ResultPackage(None, None, KnownException('asyncio.TimeoutError'))
     except asyncio.CancelledError:
         pass
     except ClientConnectorError:
