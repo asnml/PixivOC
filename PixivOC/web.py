@@ -33,7 +33,6 @@ def load_web_setting():
             ConsolePassword = data['ConsolePassword']
 
 
-Check.assert_task_cls_meet_specifications()
 server = Server()
 load_web_setting()
 app = Flask(__name__, static_url_path='/static')

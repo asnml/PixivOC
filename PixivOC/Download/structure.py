@@ -1,37 +1,7 @@
-from typing import List, Any
+from typing import List, Any, Union
 from copy import deepcopy
 from .log import downloader_logger
-
-MethodList = ['GET', 'POST']  # Case-insensitive
-
-
-# use @property ?
-class RequestPackage:
-    def __init__(self, url: str, method: str,
-                 headers: dict = None, params: dict = None, data: dict = None, msg: Any = None):
-        assert method.upper() in MethodList
-        self.url = url
-        self.method = method.upper()
-        self.headers = headers
-        self.params = params
-        self.data = data
-        self.proxy = None
-        self.msg = msg
-
-
-class ResultPackage:
-    def __init__(self, result: bytes or int, msg: Any, exception: Exception = None):
-        self.result = result
-        self.msg = msg
-        self.exception = exception
-
-    @property
-    def ok(self):
-        return True if self.exception is None else False
-
-
-RequestPackageList = List[RequestPackage]
-ResultPackageList = List[ResultPackage]
+from .abs_downloader import RequestPackage, ResultPackage
 
 
 class ClientSessionParams:
@@ -44,6 +14,7 @@ class ClientSessionParams:
         :param total_timeout: please refer to
         https://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.ClientTimeout
         :param concurrency_number: Single thread concurrency number.
+        :param interval: The interval between twice request at sync request.
         """
         self._Headers = headers
         self._TotalTimeout = total_timeout
@@ -52,22 +23,22 @@ class ClientSessionParams:
         downloader_logger.info('Create ClientSessionParams instance.')
 
     @property
-    def headers(self):
+    def headers(self) -> Union[dict, None]:
         return deepcopy(self._Headers)
 
     @property
-    def total_timeout(self):
+    def total_timeout(self) -> int:
         return self._TotalTimeout
 
     @property
-    def concurrency_number(self):
+    def concurrency_number(self) -> int:
         return self._ConcurrencyNumber
 
     @property
-    def interval(self):
+    def interval(self) -> int:
         return self._Interval
 
-    def set_headers(self, headers: dict):
+    def set_headers(self, headers: dict) -> None:
         self._Headers = headers
 
     def set_total_timeout(self, total_timeout: int) -> bool:
@@ -94,18 +65,24 @@ class ClientSessionParams:
         self._Interval = interval
         return True
 
+    def convert(self, package: RequestPackage):
+        if package.headers is None:
+            if package.none_header is False:
+                package.headers = self._Headers
+        return package
 
-class SyncSign:
+
+class BreakSign:
     def __init__(self):
         self._sign = False
 
     def __bool__(self):
         return self._sign
 
-    def make_true(self):
+    def make_true(self) -> None:
         self._sign = True
 
-    def make_false(self):
+    def make_false(self) -> None:
         self._sign = False
 
 
@@ -113,7 +90,7 @@ class SyncFuture:
     def __init__(self, result_package: ResultPackage):
         self._ResultPackage = result_package
 
-    def result(self):
+    def result(self) -> ResultPackage:
         return self._ResultPackage
 
 

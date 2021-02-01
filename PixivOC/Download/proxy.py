@@ -1,7 +1,7 @@
 from random import choice
 from re import compile, sub
 from .domain import DOMAIN_RESOLVE
-from .structure import RequestPackage
+from .abs_downloader import RequestPackage
 from .log import downloader_logger
 
 

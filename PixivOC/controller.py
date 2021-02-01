@@ -1,5 +1,5 @@
 import json
-from os import path, listdir
+from os import path, listdir, getcwd, chdir
 from time import sleep
 from datetime import datetime
 from threading import Thread, Lock
@@ -7,37 +7,27 @@ from log import core_logger
 from mobileToken import TOKEN_MANAGER
 from task import StorageUnit
 from Download import PROXY_MANAGER, CLIENT_SESSION_PARAMS
-from taskTypes import BaseTask, TaskTypeList, SingleWork, UserWorks
+from abs_task import BaseTask, SUBCLASS_DICT
+from taskTypes import SingleWork, UserWorks
 
 
 DATA_FILE_NAME = 'Data.json'
 SaveLock = Lock()
+MiniSleepTime = 0.001
 AutoSaveTime = 300  # unit: second
 
 
 class Check:
     @staticmethod
-    def assert_task_cls_meet_specifications() -> None:
-        id_list = []
-        name_list = []
-        for task_cls in TaskTypeList:
-            assert 'TypeID' in dir(task_cls)
-            assert 'TypeName' in dir(task_cls)
-            assert task_cls.TypeID not in id_list
-            assert task_cls.TypeName not in name_list
-            id_list.append(task_cls.TypeID)
-            name_list.append(task_cls.TypeName)
-
-    @staticmethod
-    def all(task_name: str, save_path: str, allow_null: bool) -> bool:
-        if Check.task_name(task_name) and Check.save_path(save_path, allow_null):
+    def all(task_name_: str, save_path_: str, allow_null: bool) -> bool:
+        if Check.task_name(task_name_) and Check.save_path(save_path_, allow_null):
             return True
         return False
 
     @staticmethod
     def task_name(task_name: str) -> bool:
-        illegal_char_list = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
-        for char in illegal_char_list:
+        win_illegal_char_list = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+        for char in win_illegal_char_list:
             if task_name.find(char) != -1:
                 return False
         return True
@@ -57,6 +47,7 @@ class TaskManager:
         self.TaskMapping = dict()  # tid: instance
         self._load_tasks()
 
+        self._cwd = getcwd()
         self._AutoSaveThread = Thread(target=self._auto_save_thread)
         self._AutoSaveThread.daemon = True
         self._AutoSaveThread.start()
@@ -68,21 +59,37 @@ class TaskManager:
 
     @staticmethod
     def _get_timestamp() -> int:
-        return int(datetime.now().timestamp())
+        timestamp = int(datetime.now().timestamp())
+        sleep(MiniSleepTime)
+        return timestamp
 
     @staticmethod
     def _find_task(type_id: int) -> BaseTask or None:
-        for task_cls in TaskTypeList:
-            if type_id == task_cls.TypeID:
-                return task_cls
-        return None
+        assert type_id in SUBCLASS_DICT.keys(), f"Can't find this type id: {type_id}"
+        return SUBCLASS_DICT[type_id]
 
     def _auto_save_thread(self):
+        # TODO: Find out why the working directory reverts 
+        # back to the parent directory when the data is 
+        # saved for the first time if you enter the loop body directly.
+        # This is, the following form:
+        #
+        # def _auto_save_thread(self):
+        #     while True:
+        #         sleep(AutoSaveTime)
+        #         # At following statement, the working directory
+        #         # will reverts back to the parent directory.
+        #         self._dump_tasks()
+        #
+        first = True
         while True:
             sleep(AutoSaveTime)
             SaveLock.acquire()
-            self._dump_tasks()
+            self._dump_tasks(first)
             SaveLock.release()
+
+            if first:
+                first = False
 
     def _load_tasks(self) -> None:
         if DATA_FILE_NAME not in listdir('.'):
@@ -98,7 +105,9 @@ class TaskManager:
                 self.TaskMapping[storage_unit.TID] = task_cls(storage_unit)
             core_logger.info('Load tasks.')
 
-    def _dump_tasks(self) -> None:
+    def _dump_tasks(self, first: bool) -> None:
+        if first:
+            chdir(self._cwd)
         writing = []
         for task in self.TaskMapping.values():  # type: BaseTask
             writing.append(task.export_storage().json())
@@ -162,7 +171,7 @@ class TaskManager:
         type_id = cls.TypeID
         timestamp = self._get_timestamp()  # if you use program quickly create task, may be will repeat.
         storage_unit = StorageUnit(
-            timestamp, task_name, type_id, False, 0, [keyword], [], save_path, 1
+            timestamp, task_name, type_id, False, 0, [keyword], [], save_path
         )
         task = cls(storage_unit)  # type: BaseTask
         self.TaskMapping[timestamp] = task

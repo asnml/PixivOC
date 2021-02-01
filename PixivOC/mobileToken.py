@@ -21,6 +21,8 @@ class OperationFailedException(Exception):
 AccessTokenUpdateExpiration = 60 * 60 * 24 * 30  # unit: second
 
 
+# FIXME: 使用代理登陆时被 cloudflare 拦截会出现 json key error
+# 解决方法：使用 cloudscraper 绕过拦截 https://github.com/VeNoMouS/cloudscraper
 class TokenManager:
     instance = None
     init = True
@@ -137,8 +139,12 @@ class TokenManager:
             raise Exception('Refresh token, but not contain username and password or contain refresh token.')
 
         request_package = RequestPackage(url, 'POST', headers, data=data)
-        self._DownloadThread = DownloadThread(self._child_fetch_callback, sync=True)
-        self._DownloadThread.start(lambda future: print(end=''), [request_package])
+        self._DownloadThread = DownloadThread(
+            self._child_fetch_callback,
+            lambda future: print(end=''),
+            sync = True
+        )
+        self._DownloadThread.start([request_package])
         return True
         # must be sync downloader
         # use async download will raise ConnectionResetError exception.
@@ -155,6 +161,8 @@ class TokenManager:
                 callback = self._SendTokenList.pop()
                 callback("Internet connection exception")
 
+    # FIXME: 未捕捉 son.decoder.JSONDecodeError 异常
+    # 该异常出现于使用代理登陆或者刷新 token 时被 cloudflare 拦截
     def _extract_token(self, resp: str):
         try:
             resp = loads(resp)  # type: dict
